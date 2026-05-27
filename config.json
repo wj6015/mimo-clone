@@ -1,0 +1,13 @@
+{
+    "api_url": "https://token-plan-cn.xiaomimimo.com/v1/chat/completions",
+    "model_name": "mimo-v2.5-tts-voiceclone",
+    "api_key": "your apikey here",
+    "port": 8080,
+    "host": "0.0.0.0",
+    "max_file_size_mb": 50,
+    "allowed_extensions": ["wav", "mp3", "ogg", "flac"],
+    "output_dir": "outputs",
+    "auto_cleanup_hours": 24,
+    "default_text": "你好，这是声音克隆测试",
+    "debug_mode": false
+}
