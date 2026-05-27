@@ -463,5 +463,3 @@ Content-Type: multipart/form-data
 ```
 
 ---
-
-直接复制上面的内容，保存为 `README.md` 文件，上传到 GitHub 仓库根目录即可！
