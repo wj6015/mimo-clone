@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiMo 声音克隆平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* API 配置面板样式 */
+        .config-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .config-header {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            transition: background 0.3s;
+        }
+        .config-header:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+        }
+        .config-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .config-header h3 small {
+            font-weight: 400;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .config-header .arrow {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .config-header.active .arrow {
+            transform: rotate(180deg);
+        }
+        .config-body {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .config-body.show {
+            padding: 20px;
+            max-height: 500px;
+        }
+        .config-form {
+            display: grid;
+            gap: 16px;
+        }
+        .config-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .config-field label {
+            width: 90px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+            text-align: right;
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+        .config-field .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .config-field input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1px solid #ced4da;
+            border-radius: 10px;
+            font-size: 13px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .config-field input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+        .config-field input::placeholder {
+            color: #adb5bd;
+        }
+        .config-field .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .config-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .config-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .config-status {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: none;
+            max-width: 250px;
+        }
+        .config-status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .config-status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .config-status.info {
+            display: block;
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .config-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .config-btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .config-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+        .config-btn.secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        .config-btn.secondary:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+        .config-info {
+            margin-top: 16px;
+            padding: 14px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #2e7d32;
+        }
+        .config-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .config-info code {
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        .config-source {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .config-source.hot {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .config-source.config {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        /* 个人 API Key 输入区域样式 */
+        .personal-key-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            margin-right: 20px;
+            border: 2px solid #667eea;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.15);
+        }
+        .personal-key-form {
+            display: grid;
+            gap: 12px;
+        }
+        .personal-key-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .personal-key-field label {
+            width: 90px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .personal-key-field .required {
+            color: #ff4757;
+        }
+        .personal-key-field .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .personal-key-field input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1px solid #ced4da;
+            border-radius: 10px;
+            font-size: 13px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .personal-key-field input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+        .personal-key-field .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .toggle-key-btn {
+            padding: 10px !important;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .personal-key-hint {
+            padding: 10px 14px;
+            background: #fff8e1;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin-top: 4px;
+        }
+        .personal-key-hint p {
+            margin: 0;
+            font-size: 12px;
+            color: #795548;
+        }
+        .personal-key-hint i {
+            color: #ff9800;
+            margin-right: 6px;
+        }
+        @media (max-width: 768px) {
+            .personal-key-field {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .personal-key-field label {
+                width: 100%;
+                text-align: left;
+            }
+            .config-field {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .config-field label {
+                width: 100%;
+                text-align: left;
+                padding-top: 0;
+            }
+            .config-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .config-status {
+                max-width: 100%;
+                text-align: center;
+            }
+            .config-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            .config-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-microphone-alt"></i>
+                <h1>MiMo 声音克隆平台</h1>
+            </div>
+            <p class="subtitle">基于小米MiMo-v2.5-TTS-VoiceClone的声音克隆服务</p>
+        </header>
+
+        <!-- API 配置面板（管理员配置全局默认值） -->
+        <div class="config-panel">
+            <div class="config-header" onclick="toggleConfigPanel()">
+                <h3><i class="fas fa-cog"></i> API 配置 <small>（热加载，无需重启）</small></h3>
+                <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="config-body" id="configBody">
+                <div class="config-form">
+                    <div class="config-field">
+                        <label for="apiUrl">API URL:</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-link input-icon"></i>
+                            <input type="text" id="apiUrl" placeholder="https://token-plan-cn.xiaomimimo.com/v1/chat/completions">
+                        </div>
+                    </div>
+                    <div class="config-field">
+                        <label for="apiKey">API Key:</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" id="apiKey" placeholder="sk-xxxxxxxxxxxxxxxx">
+                        </div>
+                    </div>
+                    <div class="config-actions">
+                        <span class="config-status" id="configStatus"></span>
+                        <div class="config-buttons">
+                            <button class="config-btn secondary" onclick="resetHotConfig()">
+                                <i class="fas fa-undo"></i> 恢复默认
+                            </button>
+                            <button class="config-btn primary" onclick="saveHotConfig()">
+                                <i class="fas fa-save"></i> 保存并生效
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-info" id="configInfo" style="display: none;">
+                    <strong><i class="fas fa-info-circle"></i> 当前配置状态：</strong>
+                    <div>API URL: <code id="currentApiUrl"></code> <span class="config-source" id="apiUrlSource"></span></div>
+                    <div>API Key: <code id="currentApiKey"></code> <span class="config-source" id="apiKeySource"></span></div>
+                    <div>Model: <code id="currentModel"></code></div>
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <!-- 上传参考音频 -->
+            <div class="upload-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-upload"></i> 上传参考音频</h2>
+                    <p>上传一个音频文件作为声音克隆的参考</p>
+                </div>
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>拖放音频文件到这里，或点击选择文件</p>
+                    <p class="hint">支持的格式: WAV, MP3, OGG, FLAC (最大 {{ config.max_file_size_mb }}MB)</p>
+                    <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.flac" hidden>
+                    <button class="btn" id="selectFileBtn">
+                        <i class="fas fa-folder-open"></i> 选择文件
+                    </button>
+                </div>
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-preview">
+                        <i class="fas fa-music"></i>
+                        <div class="file-details">
+                            <p id="fileName">文件名: </p>
+                            <p id="fileSize">大小: </p>
+                            <p id="fileType">类型: </p>
+                        </div>
+                        <button class="btn btn-danger" id="removeFileBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 整体风格选择 -->
+            <div class="style-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-palette"></i> 选择整体风格</h2>
+                    <p>选择语音的整体风格，会添加在文本开头</p>
+                </div>
+                <div class="style-tabs">
+                    <button class="style-tab active" data-tab="emotion-basic">基础情绪</button>
+                    <button class="style-tab" data-tab="emotion-complex">复合情绪</button>
+                    <button class="style-tab" data-tab="tone">整体语调</button>
+                    <button class="style-tab" data-tab="voice-type">音色定位</button>
+                    <button class="style-tab" data-tab="persona">人设腔调</button>
+                    <button class="style-tab" data-tab="dialect">方言</button>
+                    <button class="style-tab" data-tab="roleplay">角色扮演</button>
+                    <button class="style-tab" data-tab="singing">唱歌</button>
+                </div>
+                <div class="style-content">
+                    <div class="style-group active" id="emotion-basic">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="开心">😊 开心</button>
+                            <button class="style-tag" data-style="悲伤">😢 悲伤</button>
+                            <button class="style-tag" data-style="愤怒">😠 愤怒</button>
+                            <button class="style-tag" data-style="恐惧">😨 恐惧</button>
+                            <button class="style-tag" data-style="惊讶">😲 惊讶</button>
+                            <button class="style-tag" data-style="兴奋">🤩 兴奋</button>
+                            <button class="style-tag" data-style="委屈">🥺 委屈</button>
+                            <button class="style-tag" data-style="平静">😌 平静</button>
+                            <button class="style-tag" data-style="冷漠">😑 冷漠</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="emotion-complex">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="怅然">怅然</button>
+                            <button class="style-tag" data-style="欣慰">欣慰</button>
+                            <button class="style-tag" data-style="无奈">无奈</button>
+                            <button class="style-tag" data-style="愧疚">愧疚</button>
+                            <button class="style-tag" data-style="释然">释然</button>
+                            <button class="style-tag" data-style="嫉妒">嫉妒</button>
+                            <button class="style-tag" data-style="厌倦">厌倦</button>
+                            <button class="style-tag" data-style="忐忑">忐忑</button>
+                            <button class="style-tag" data-style="动情">动情</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="tone">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="温柔">温柔</button>
+                            <button class="style-tag" data-style="高冷">高冷</button>
+                            <button class="style-tag" data-style="活泼">活泼</button>
+                            <button class="style-tag" data-style="严肃">严肃</button>
+                            <button class="style-tag" data-style="慵懒">慵懒</button>
+                            <button class="style-tag" data-style="俏皮">俏皮</button>
+                            <button class="style-tag" data-style="深沉">深沉</button>
+                            <button class="style-tag" data-style="干练">干练</button>
+                            <button class="style-tag" data-style="凌厉">凌厉</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="voice-type">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="磁性">磁性</button>
+                            <button class="style-tag" data-style="醇厚">醇厚</button>
+                            <button class="style-tag" data-style="清亮">清亮</button>
+                            <button class="style-tag" data-style="空灵">空灵</button>
+                            <button class="style-tag" data-style="稚嫩">稚嫩</button>
+                            <button class="style-tag" data-style="苍老">苍老</button>
+                            <button class="style-tag" data-style="甜美">甜美</button>
+                            <button class="style-tag" data-style="沙哑">沙哑</button>
+                            <button class="style-tag" data-style="醇雅">醇雅</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="persona">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="夹子音">夹子音</button>
+                            <button class="style-tag" data-style="御姐音">御姐音</button>
+                            <button class="style-tag" data-style="正太音">正太音</button>
+                            <button class="style-tag" data-style="大叔音">大叔音</button>
+                            <button class="style-tag" data-style="台湾腔">台湾腔</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="dialect">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="东北话">东北话</button>
+                            <button class="style-tag" data-style="四川话">四川话</button>
+                            <button class="style-tag" data-style="河南话">河南话</button>
+                            <button class="style-tag" data-style="粤语">粤语</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="roleplay">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="孙悟空">孙悟空</button>
+                            <button class="style-tag" data-style="林黛玉">林黛玉</button>
+                        </div>
+                    </div>
+                    <div class="style-group" id="singing">
+                        <div class="style-tags">
+                            <button class="style-tag" data-style="唱歌">🎤 唱歌</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="selected-styles" id="selectedStyles">
+                    <span class="label">已选风格:</span>
+                    <span class="tags" id="selectedStyleTags">无</span>
+                    <button class="btn btn-small" id="clearStylesBtn">清空</button>
+                </div>
+            </div>
+
+            <!-- 文本输入 -->
+            <div class="text-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-align-left"></i> 输入要合成的文本</h2>
+                    <p>输入你想要克隆声音说出的文字</p>
+                </div>
+                <textarea id="textInput" placeholder="例如：你好，欢迎使用MiMo声音克隆服务..." rows="5">{{ config.default_text }}</textarea>
+                <div class="text-controls">
+                    <span id="charCount">0/500 字符</span>
+                    <button class="btn btn-secondary" id="clearTextBtn">
+                        <i class="fas fa-eraser"></i> 清空文本
+                    </button>
+                </div>
+            </div>
+
+            <!-- 细粒度控制标签 -->
+            <div class="tag-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-sliders-h"></i> 插入细粒度控制标签</h2>
+                    <p>点击标签可插入到文本光标位置，进行精细控制</p>
+                </div>
+                <div class="tag-tabs">
+                    <button class="tag-tab active" data-tab="tag-rhythm">语速与节奏</button>
+                    <button class="tag-tab" data-tab="tag-emotion">情绪状态</button>
+                    <button class="tag-tab" data-tab="tag-voice">语音特征</button>
+                    <button class="tag-tab" data-tab="tag-expression">哭笑表达</button>
+                </div>
+                <div class="tag-content">
+                    <div class="tag-group active" id="tag-rhythm">
+                        <div class="tag-tags">
+                            <button class="insert-tag" onclick="insertTagAtCursor('[吸气]')">[吸气]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[深呼吸]')">[深呼吸]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[叹气]')">[叹气]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[长叹一口气]')">[长叹一口气]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[喘息]')">[喘息]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[屏息]')">[屏息]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[停顿]')">[停顿]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[语速加快]')">[语速加快]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[语速放慢]')">[语速放慢]</button>
+                        </div>
+                    </div>
+                    <div class="tag-group" id="tag-emotion">
+                        <div class="tag-tags">
+                            <button class="insert-tag" onclick="insertTagAtCursor('[紧张]')">[紧张]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[害怕]')">[害怕]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[激动]')">[激动]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[疲惫]')">[疲惫]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[委屈]')">[委屈]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[撒娇]')">[撒娇]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[心虚]')">[心虚]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[震惊]')">[震惊]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[不耐烦]')">[不耐烦]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[碎碎念]')">[碎碎念]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[小声]')">[小声]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[提高音量]')">[提高音量]</button>
+                        </div>
+                    </div>
+                    <div class="tag-group" id="tag-voice">
+                        <div class="tag-tags">
+                            <button class="insert-tag" onclick="insertTagAtCursor('[颤抖]')">[颤抖]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[声音颤抖]')">[声音颤抖]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[变调]')">[变调]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[破音]')">[破音]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[鼻音]')">[鼻音]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[气声]')">[气声]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[沙哑]')">[沙哑]</button>
+                        </div>
+                    </div>
+                    <div class="tag-group" id="tag-expression">
+                        <div class="tag-tags">
+                            <button class="insert-tag" onclick="insertTagAtCursor('[笑]')">[笑]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[轻笑]')">[轻笑]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[大笑]')">[大笑]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[冷笑]')">[冷笑]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[苦笑]')">[苦笑]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[抽泣]')">[抽泣]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[呜咽]')">[呜咽]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[哽咽]')">[哽咽]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[嚎啕大哭]')">[嚎啕大哭]</button>
+                            <button class="insert-tag" onclick="insertTagAtCursor('[咳嗽]')">[咳嗽]</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tag-help">
+                    <p><i class="fas fa-info-circle"></i> <strong>使用提示：</strong>将光标放在文本中想插入标签的位置，然后点击标签按钮即可插入</p>
+                </div>
+            </div>
+
+            <!-- 预览组合文本 -->
+            <div class="preview-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-eye"></i> 预览发送文本</h2>
+                    <p>查看最终发送给API的完整文本（包含所有标签）</p>
+                </div>
+                <div class="preview-box" id="previewBox">
+                    <pre id="previewText">暂无预览</pre>
+                </div>
+                <button class="btn btn-secondary" id="refreshPreviewBtn" onclick="refreshPreview()">
+                    <i class="fas fa-sync"></i> 刷新预览
+                </button>
+            </div>
+
+            <!-- 个人 API Key 输入（可选，填了优先用自己的，留空则用管理员配置的） -->
+            <div class="personal-key-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-shield"></i> 你的 API Key</h2>
+                    <p>填写后优先使用你的 Key，留空则使用上方管理员配置的 Key</p>
+                </div>
+                <div class="personal-key-form">
+                    <div class="personal-key-field">
+                        <label>API Key:</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" id="personalApiKey" placeholder="留空则使用上方全局配置的 Key">
+                        </div>
+                        <button class="btn btn-small toggle-key-btn" onclick="toggleKeyVisibility()">
+                            <i class="fas fa-eye" id="toggleKeyIcon"></i>
+                        </button>
+                    </div>
+                    <div class="personal-key-field">
+                        <label>API URL:</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-link input-icon"></i>
+                            <input type="text" id="personalApiUrl" placeholder="留空则使用上方全局配置的 URL">
+                        </div>
+                    </div>
+                    <div class="personal-key-hint">
+                        <p><i class="fas fa-info-circle"></i> 你的 API Key 仅在本次请求中使用，不会被保存或共享。留空则使用管理员配置的默认 Key</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-section">
+                <button class="btn btn-primary btn-large" id="processBtn" onclick="startClone()">
+                    <i class="fas fa-play"></i> 开始克隆声音
+                </button>
+            </div>
+
+            <!-- 结果区域 -->
+            <div class="result-section" id="resultSection" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-check-circle"></i> 克隆结果</h2>
+                </div>
+                <div class="result-content">
+                    <div class="success-message" id="successMessage" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>声音克隆成功！</h3>
+                        <p>你的克隆音频已生成</p>
+                    </div>
+                    <div class="audio-player" id="audioPlayer" style="display: none;">
+                        <h4><i class="fas fa-headphones"></i> 预览克隆声音:</h4>
+                        <audio id="audioElement" controls preload="auto">
+                            您的浏览器不支持音频播放
+                        </audio>
+                    </div>
+                    <div class="download-section" id="downloadSection" style="display: none;">
+                        <h4><i class="fas fa-download"></i> 下载链接:</h4>
+                        <div class="download-link">
+                            <a href="#" id="downloadLink" target="_blank">
+                                <i class="fas fa-download"></i> 下载克隆音频
+                            </a>
+                            <span id="downloadInfo"></span>
+                        </div>
+                        <p class="file-path" id="filePath"></p>
+                    </div>
+                    <div class="error-message" id="errorMessage" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>处理失败</h3>
+                        <p id="errorText"></p>
+                        <p class="error-details" id="errorDetails"></p>
+                    </div>
+                </div>
+                <div class="debug-info" id="debugInfo" style="display: none;">
+                    <h4><i class="fas fa-bug"></i> 调试信息</h4>
+                    <div class="debug-content">
+                        <p><strong>实际发送的文本:</strong></p>
+                        <pre id="sentText"></pre>
+                        <p><strong>风格标签:</strong> <span id="debugStyleTag">无</span></p>
+                        <p><strong>API请求信息:</strong></p>
+                        <p>API URL: <span id="debugApiUrl"></span></p>
+                        <p>模型: <span id="debugModel"></span></p>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="newCloneBtn" onclick="resetForm()">
+                    <i class="fas fa-plus"></i> 新建克隆
+                </button>
+            </div>
+
+            <!-- 加载动画 -->
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>正在处理中，请稍候...</p>
+                <p class="loading-hint">这可能需要一些时间，取决于音频长度和文本量</p>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>MiMo 声音克隆平台 | 基于小米MiMo-v2.5-TTS-VoiceClone模型</p>
+                <p>API地址: <span id="footerApiUrl">{{ config.api_url }}</span> | 模型: <span id="footerModel">{{ config.model_name }}</span></p>
+                <p class="warning">⚠️ 请确保你有权限使用上传的音频，声音克隆技术请合法合规使用</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ===== 全局变量 =====
+        let selectedStyles = [];
+        let isProcessing = false;
+        let lastPreviewUrl = '';
+        
+        // ===== API 配置热加载功能 =====
+        
+        function toggleConfigPanel() {
+            const body = document.getElementById('configBody');
+            const header = body.previousElementSibling;
+            if (body.classList.contains('show')) {
+                body.classList.remove('show');
+                header.classList.remove('active');
+            } else {
+                body.classList.add('show');
+                header.classList.add('active');
+                loadHotConfig();
+            }
+        }
+        
+        async function loadHotConfig() {
+            const configStatus = document.getElementById('configStatus');
+            const configInfo = document.getElementById('configInfo');
+            try {
+                configStatus.className = 'config-status info';
+                configStatus.textContent = '正在加载配置...';
+                configStatus.style.display = 'block';
+                const response = await fetch('/api/hot-config');
+                const data = await response.json();
+                if (data.success) {
+                    if (data.api_url) {
+                        document.getElementById('apiUrl').value = data.api_url;
+                        document.getElementById('currentApiUrl').textContent = data.api_url;
+                    }
+                    document.getElementById('currentApiKey').textContent = 
+                        (data.api_key && data.api_key !== '未配置') ? data.api_key : '未配置';
+                    const api_url_source = document.getElementById('apiUrlSource');
+                    const api_key_source = document.getElementById('apiKeySource');
+                    api_url_source.className = 'config-source ' + data.api_url_source;
+                    api_url_source.textContent = data.api_url_source === 'hot' ? '网页传入' : 'config.json';
+                    api_key_source.className = 'config-source ' + data.api_key_source;
+                    api_key_source.textContent = data.api_key_source === 'hot' ? '网页传入' : 'config.json';
+                    document.getElementById('currentModel').textContent = data.model_name || '未配置';
+                    configInfo.style.display = 'block';
+                    if (data.api_url) document.getElementById('footerApiUrl').textContent = data.api_url;
+                    if (data.model_name) document.getElementById('footerModel').textContent = data.model_name;
+                    configStatus.className = 'config-status success';
+                    configStatus.textContent = '✅ 配置加载成功';
+                    setTimeout(() => { configStatus.style.display = 'none'; }, 2000);
+                } else {
+                    configStatus.className = 'config-status error';
+                    configStatus.textContent = '❌ 加载配置失败: ' + (data.message || '未知错误');
+                }
+            } catch (error) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 网络错误: ' + error.message;
+            }
+        }
+        
+        async function saveHotConfig() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const configStatus = document.getElementById('configStatus');
+            if (!apiKey) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 请输入API Key';
+                configStatus.style.display = 'block';
+                return;
+            }
+            if (!apiUrl) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 请输入API URL';
+                configStatus.style.display = 'block';
+                return;
+            }
+            try {
+                configStatus.className = 'config-status info';
+                configStatus.textContent = '🔄 正在保存配置...';
+                configStatus.style.display = 'block';
+                const response = await fetch('/api/hot-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey, api_url: apiUrl })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    configStatus.className = 'config-status success';
+                    configStatus.textContent = '✅ ' + data.message;
+                    document.getElementById('apiKey').value = '';
+                    setTimeout(() => { loadHotConfig(); }, 500);
+                    setTimeout(() => { configStatus.style.display = 'none'; }, 3000);
+                } else {
+                    configStatus.className = 'config-status error';
+                    configStatus.textContent = '❌ 保存失败: ' + (data.message || '未知错误');
+                }
+            } catch (error) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 网络错误: ' + error.message;
+            }
+        }
+        
+        async function resetHotConfig() {
+            const configStatus = document.getElementById('configStatus');
+            try {
+                configStatus.className = 'config-status info';
+                configStatus.textContent = '🔄 正在重置为默认配置...';
+                configStatus.style.display = 'block';
+                const response = await fetch('/api/hot-config', { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    configStatus.className = 'config-status success';
+                    configStatus.textContent = '✅ ' + data.message;
+                    document.getElementById('apiKey').value = '';
+                    document.getElementById('apiUrl').value = '';
+                    setTimeout(() => { loadHotConfig(); }, 500);
+                    setTimeout(() => { configStatus.style.display = 'none'; }, 3000);
+                } else {
+                    configStatus.className = 'config-status error';
+                    configStatus.textContent = '❌ 重置失败';
+                }
+            } catch (error) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 网络错误: ' + error.message;
+            }
+        }
+        
+        // ===== 细粒度标签插入功能 =====
+        
+        function insertTagAtCursor(tag) {
+            const textarea = document.getElementById('textInput');
+            if (!textarea) return;
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            const text = textarea.value;
+            const before = text.substring(0, startPos);
+            const after = text.substring(endPos);
+            textarea.value = before + tag + after;
+            textarea.selectionStart = textarea.selectionEnd = startPos + tag.length;
+            textarea.focus();
+            updateCharCount();
+            refreshPreview();
+        }
+        
+        // ===== 整体风格标签功能 =====
+        
+        function toggleStyle(style, button) {
+            const index = selectedStyles.indexOf(style);
+            if (index > -1) {
+                selectedStyles.splice(index, 1);
+                button.classList.remove('selected');
+            } else {
+                selectedStyles.push(style);
+                button.classList.add('selected');
+            }
+            updateSelectedStyles();
+            refreshPreview();
+        }
+        
+        function updateSelectedStyles() {
+            const tagsContainer = document.getElementById('selectedStyleTags');
+            if (selectedStyles.length === 0) {
+                tagsContainer.textContent = '无';
+            } else {
+                tagsContainer.innerHTML = selectedStyles.map(s => '<span class="selected-tag">' + s + '</span>').join(' ');
+            }
+        }
+        
+        function clearStyles() {
+            selectedStyles = [];
+            document.querySelectorAll('.style-tag').forEach(btn => { btn.classList.remove('selected'); });
+            updateSelectedStyles();
+            refreshPreview();
+        }
+        
+        // ===== 文本相关功能 =====
+        
+        function updateCharCount() {
+            const textarea = document.getElementById('textInput');
+            const charCount = document.getElementById('charCount');
+            if (textarea && charCount) {
+                const count = textarea.value.length;
+                charCount.textContent = count + '/500 字符';
+                charCount.style.color = count > 500 ? '#f44336' : '#666';
+            }
+        }
+        
+        function refreshPreview() {
+            const textarea = document.getElementById('textInput');
+            const previewText = document.getElementById('previewText');
+            if (textarea && previewText) {
+                let fullText = '';
+                if (selectedStyles.length > 0) {
+                    fullText = '(' + selectedStyles.join(')(') + ')';
+                }
+                fullText += textarea.value.trim();
+                previewText.textContent = fullText || '暂无预览';
+            }
+        }
+        
+        function clearText() {
+            const textarea = document.getElementById('textInput');
+            if (textarea) {
+                textarea.value = '';
+                updateCharCount();
+                refreshPreview();
+            }
+        }
+        
+        // ===== 文件上传功能 =====
+        
+        function handleFileSelect(file) {
+            if (file) {
+                document.getElementById('fileName').textContent = '文件名: ' + file.name;
+                document.getElementById('fileSize').textContent = '大小: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                document.getElementById('fileType').textContent = '类型: ' + file.type;
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('fileInfo').style.display = 'block';
+            }
+        }
+        
+        function removeFile() {
+            document.getElementById('audioFile').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+        }
+        
+        // ===== 切换 API Key 可见性 =====
+        
+        function toggleKeyVisibility() {
+            const input = document.getElementById('personalApiKey');
+            const icon = document.getElementById('toggleKeyIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+        
+        // ===== 克隆功能 =====
+        
+        async function startClone() {
+            const audioFile = document.getElementById('audioFile');
+            const textInput = document.getElementById('textInput');
+            const personalApiKey = document.getElementById('personalApiKey');
+            const personalApiUrl = document.getElementById('personalApiUrl');
+            const file = audioFile.files[0];
+            let text = textInput.value.trim();
+            
+            if (isProcessing) return;
+            
+            if (!file) { alert('请先上传参考音频文件！'); return; }
+            if (!text) { alert('请输入要合成的文本！'); return; }
+            
+            // 个人 Key 是可选的，不填则后端会使用管理员配置的全局 Key
+            // 删除了之前的强制校验逻辑
+            
+            if (selectedStyles.length > 0) {
+                text = '(' + selectedStyles.join(')(') + ')' + text;
+            }
+            
+            isProcessing = true;
+            const processBtn = document.getElementById('processBtn');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+            
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('audio_file', file);
+            formData.append('text', text);
+            formData.append('api_key', personalApiKey.value.trim());
+            formData.append('api_url', personalApiUrl.value.trim());
+            
+            try {
+                const response = await fetch('/clone', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'block';
+                
+                if (data.success) {
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
+                    
+                    const audioElement = document.getElementById('audioElement');
+                    const previewUrl = window.location.origin + '/preview/' + data.filename + '?t=' + Date.now();
+                    audioElement.src = previewUrl;
+                    audioElement.load();
+                    lastPreviewUrl = previewUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                    
+                    document.getElementById('downloadLink').href = window.location.origin + '/download/' + data.filename;
+                    document.getElementById('downloadInfo').textContent = '(' + data.file_size.toFixed(1) + ' KB)';
+                    document.getElementById('downloadSection').style.display = 'block';
+                    document.getElementById('filePath').textContent = '本地路径: ' + data.local_path;
+                    
+                    document.getElementById('debugInfo').style.display = 'block';
+                    document.getElementById('sentText').textContent = data.sent_text || text;
+                    document.getElementById('debugStyleTag').textContent = data.style_tag || '无';
+                    document.getElementById('debugApiUrl').textContent = personalApiUrl.value || '使用默认配置';
+                    document.getElementById('debugModel').textContent = document.getElementById('currentModel').textContent || 'mimo-v2.5-tts-voiceclone';
+                } else {
+                    document.getElementById('successMessage').style.display = 'none';
+                    document.getElementById('audioPlayer').style.display = 'none';
+                    document.getElementById('downloadSection').style.display = 'none';
+                    document.getElementById('debugInfo').style.display = 'none';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('errorText').textContent = data.message;
+                    document.getElementById('errorDetails').textContent = data.details || '';
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'block';
+                document.getElementById('successMessage').style.display = 'none';
+                document.getElementById('audioPlayer').style.display = 'none';
+                document.getElementById('downloadSection').style.display = 'none';
+                document.getElementById('debugInfo').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorText').textContent = '网络错误';
+                document.getElementById('errorDetails').textContent = error.message;
+            } finally {
+                isProcessing = false;
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-play"></i> 开始克隆声音';
+            }
+        }
+        
+        // ===== 重置表单 =====
+        
+        function resetForm() {
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('debugInfo').style.display = 'none';
+            document.getElementById('audioFile').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('textInput').value = '';
+            selectedStyles = [];
+            document.querySelectorAll('.style-tag').forEach(btn => { btn.classList.remove('selected'); });
+            updateSelectedStyles();
+            updateCharCount();
+            refreshPreview();
+        }
+        
+        // ===== 标签页切换 =====
+        
+        function switchStyleTab(tabId) {
+            document.querySelectorAll('.style-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.style-tab[data-tab="' + tabId + '"]').classList.add('active');
+            document.querySelectorAll('.style-group').forEach(g => g.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function switchTagTab(tabId) {
+            document.querySelectorAll('.tag-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tag-tab[data-tab="' + tabId + '"]').classList.add('active');
+            document.querySelectorAll('.tag-group').forEach(g => g.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // ===== 初始化 =====
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.style-tag').forEach(button => {
+                button.addEventListener('click', function() {
+                    toggleStyle(this.getAttribute('data-style'), this);
+                });
+            });
+            document.getElementById('clearStylesBtn').addEventListener('click', clearStyles);
+            document.querySelectorAll('.style-tab').forEach(tab => {
+                tab.addEventListener('click', function() { switchStyleTab(this.getAttribute('data-tab')); });
+            });
+            document.querySelectorAll('.tag-tab').forEach(tab => {
+                tab.addEventListener('click', function() { switchTagTab(this.getAttribute('data-tab')); });
+            });
+            const textInput = document.getElementById('textInput');
+            if (textInput) {
+                textInput.addEventListener('input', function() { updateCharCount(); refreshPreview(); });
+            }
+            document.getElementById('clearTextBtn').addEventListener('click', clearText);
+            const audioFile = document.getElementById('audioFile');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const uploadArea = document.getElementById('uploadArea');
+            if (selectFileBtn && audioFile) {
+                selectFileBtn.addEventListener('click', function(e) { e.stopPropagation(); audioFile.click(); });
+            }
+            if (uploadArea) {
+                uploadArea.addEventListener('click', function(e) {
+                    if (e.target !== selectFileBtn && !selectFileBtn.contains(e.target)) audioFile.click();
+                });
+                uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+                uploadArea.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+                uploadArea.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                    if (e.dataTransfer.files.length > 0) {
+                        audioFile.files = e.dataTransfer.files;
+                        handleFileSelect(e.dataTransfer.files[0]);
+                    }
+                });
+            }
+            if (audioFile) {
+                audioFile.addEventListener('change', function() {
+                    if (this.files.length > 0) handleFileSelect(this.files[0]);
+                });
+            }
+            document.getElementById('removeFileBtn').addEventListener('click', removeFile);
+            updateCharCount();
+            refreshPreview();
+            setTimeout(() => { checkInitialConfig(); }, 500);
+        });
+        
+        async function checkInitialConfig() {
+            try {
+                const response = await fetch('/api/hot-config');
+                const data = await response.json();
+                if (data.success && !data.api_key_configured) {
+                    toggleConfigPanel();
+                    const configStatus = document.getElementById('configStatus');
+                    configStatus.className = 'config-status error';
+                    configStatus.textContent = '⚠️ 请先配置API Key才能使用声音克隆功能';
+                    configStatus.style.display = 'block';
+                } else if (data.success) {
+                    if (data.api_url) document.getElementById('footerApiUrl').textContent = data.api_url;
+                    if (data.model_name) document.getElementById('footerModel').textContent = data.model_name;
+                }
+            } catch (error) {
+                console.log('初始配置检查失败:', error);
+            }
+        }
+    </script>
+</body>
+</html>
