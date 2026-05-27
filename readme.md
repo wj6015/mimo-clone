@@ -59,8 +59,8 @@ mimo-voice-clone/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/mimo-voice-clone.git
-cd mimo-voice-clone
+git clone https://github.com/wj6015/mimo-clone.git
+cd mimo-clone
 
 # 2. 创建虚拟环境
 python -m venv venv
