@@ -82,7 +82,8 @@
             flex: 1;
             position: relative;
         }
-        .config-field input {
+        .config-field input,
+        .config-field select {
             width: 100%;
             padding: 12px 14px 12px 40px;
             border: 1px solid #ced4da;
@@ -92,7 +93,8 @@
             background: white;
             box-sizing: border-box;
         }
-        .config-field input:focus {
+        .config-field input:focus,
+        .config-field select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
@@ -175,7 +177,8 @@
         .personal-key-field label { width: 90px; font-size: 13px; font-weight: 500; color: #495057; text-align: right; flex-shrink: 0; }
         .personal-key-field .required { color: #ff4757; }
         .personal-key-field .input-wrapper { flex: 1; position: relative; }
-        .personal-key-field input {
+        .personal-key-field input,
+        .personal-key-field select {
             width: 100%;
             padding: 12px 14px 12px 40px;
             border: 1px solid #ced4da;
@@ -185,7 +188,8 @@
             background: white;
             box-sizing: border-box;
         }
-        .personal-key-field input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25); }
+        .personal-key-field input:focus,
+        .personal-key-field select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25); }
         .personal-key-field .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6c757d; font-size: 14px; }
         .toggle-key-btn { padding: 10px !important; min-width: 40px; display: flex; align-items: center; justify-content: center; }
         .personal-key-hint { padding: 10px 14px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #ffc107; margin-top: 4px; }
@@ -447,10 +451,20 @@
             <div class="config-body" id="configBody">
                 <div class="config-form">
                     <div class="config-field">
-                        <label for="apiUrl">API URL:</label>
+                        <label for="adminPassword">管理密码:</label>
                         <div class="input-wrapper">
-                            <i class="fas fa-link input-icon"></i>
-                            <input type="text" id="apiUrl" placeholder="https://token-plan-cn.xiaomimimo.com/v1/chat/completions">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="adminPassword" placeholder="保存配置或管理文件时必填">
+                        </div>
+                    </div>
+                    <div class="config-field">
+                        <label for="apiCluster">API 集群:</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-server input-icon"></i>
+                            <select id="apiCluster">
+                                <option value="cn">CN 中国大陆</option>
+                                <option value="sgp">SGP 新加坡</option>
+                            </select>
                         </div>
                     </div>
                     <div class="config-field">
@@ -474,7 +488,8 @@
                 </div>
                 <div class="config-info" id="configInfo" style="display: none;">
                     <strong><i class="fas fa-info-circle"></i> 当前配置状态：</strong>
-                    <div>API URL: <code id="currentApiUrl"></code> <span class="config-source" id="apiUrlSource"></span></div>
+                    <div>API 集群: <code id="currentApiCluster"></code> <span class="config-source" id="apiClusterSource"></span></div>
+                    <div>API URL: <code id="currentApiUrl"></code></div>
                     <div>API Key: <code id="currentApiKey"></code> <span class="config-source" id="apiKeySource"></span></div>
                     <div>Model: <code id="currentModel"></code></div>
                 </div>
@@ -504,8 +519,8 @@
                     <div class="upload-area" id="uploadArea">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>拖放音频文件到这里，或点击选择文件</p>
-                        <p class="hint">支持的格式: WAV, MP3, OGG, FLAC, WEBM, M4A (最大 {{ config.max_file_size_mb }}MB)</p>
-                        <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.flac,.webm,.m4a" hidden>
+                        <p class="hint">支持的格式: WAV, MP3 (最大 {{ config.max_file_size_mb }}MB)</p>
+                        <input type="file" id="audioFile" accept=".wav,.mp3" hidden>
                         <button class="btn" id="selectFileBtn">
                             <i class="fas fa-folder-open"></i> 选择文件
                         </button>
@@ -787,10 +802,14 @@
                         </button>
                     </div>
                     <div class="personal-key-field">
-                        <label>API URL:</label>
+                        <label>API 集群:</label>
                         <div class="input-wrapper">
-                            <i class="fas fa-link input-icon"></i>
-                            <input type="text" id="personalApiUrl" placeholder="留空则使用上方全局配置的 URL">
+                            <i class="fas fa-server input-icon"></i>
+                            <select id="personalApiCluster">
+                                <option value="">使用管理员默认集群</option>
+                                <option value="cn">CN 中国大陆</option>
+                                <option value="sgp">SGP 新加坡</option>
+                            </select>
                         </div>
                     </div>
                     <div class="personal-key-hint">
@@ -1355,16 +1374,18 @@
                 var response = await fetch('/api/hot-config');
                 var data = await response.json();
                 if (data.success) {
-                    if (data.api_url) {
-                        document.getElementById('apiUrl').value = data.api_url;
-                        document.getElementById('currentApiUrl').textContent = data.api_url;
+                    if (data.api_cluster) {
+                        document.getElementById('apiCluster').value = data.api_cluster;
+                        document.getElementById('currentApiCluster').textContent =
+                            (data.api_clusters && data.api_clusters[data.api_cluster] && data.api_clusters[data.api_cluster].label) || data.api_cluster;
                     }
+                    if (data.api_url) document.getElementById('currentApiUrl').textContent = data.api_url;
                     document.getElementById('currentApiKey').textContent =
                         (data.api_key && data.api_key !== '未配置') ? data.api_key : '未配置';
-                    var apiUrlSource = document.getElementById('apiUrlSource');
+                    var apiClusterSource = document.getElementById('apiClusterSource');
                     var apiKeySource = document.getElementById('apiKeySource');
-                    apiUrlSource.className = 'config-source ' + data.api_url_source;
-                    apiUrlSource.textContent = data.api_url_source === 'hot' ? '网页传入' : 'config.json';
+                    apiClusterSource.className = 'config-source ' + data.api_cluster_source;
+                    apiClusterSource.textContent = data.api_cluster_source === 'hot' ? '网页传入' : 'config.json';
                     apiKeySource.className = 'config-source ' + data.api_key_source;
                     apiKeySource.textContent = data.api_key_source === 'hot' ? '网页传入' : 'config.json';
                     document.getElementById('currentModel').textContent = data.model_name || '未配置';
@@ -1385,18 +1406,19 @@
         }
 
         async function saveHotConfig() {
-            var apiUrl = document.getElementById('apiUrl').value.trim();
+            var adminPassword = document.getElementById('adminPassword').value.trim();
+            var apiCluster = document.getElementById('apiCluster').value;
             var apiKey = document.getElementById('apiKey').value.trim();
             var configStatus = document.getElementById('configStatus');
-            if (!apiKey) {
+            if (!adminPassword) {
                 configStatus.className = 'config-status error';
-                configStatus.textContent = '❌ 请输入API Key';
+                configStatus.textContent = '❌ 请输入管理密码';
                 configStatus.style.display = 'block';
                 return;
             }
-            if (!apiUrl) {
+            if (!apiKey) {
                 configStatus.className = 'config-status error';
-                configStatus.textContent = '❌ 请输入API URL';
+                configStatus.textContent = '❌ 请输入API Key';
                 configStatus.style.display = 'block';
                 return;
             }
@@ -1406,8 +1428,11 @@
                 configStatus.style.display = 'block';
                 var response = await fetch('/api/hot-config', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ api_key: apiKey, api_url: apiUrl })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Password': adminPassword
+                    },
+                    body: JSON.stringify({ api_key: apiKey, api_cluster: apiCluster })
                 });
                 var data = await response.json();
                 if (data.success) {
@@ -1428,17 +1453,26 @@
 
         async function resetHotConfig() {
             var configStatus = document.getElementById('configStatus');
+            var adminPassword = document.getElementById('adminPassword').value.trim();
+            if (!adminPassword) {
+                configStatus.className = 'config-status error';
+                configStatus.textContent = '❌ 请输入管理密码';
+                configStatus.style.display = 'block';
+                return;
+            }
             try {
                 configStatus.className = 'config-status info';
                 configStatus.textContent = '🔄 正在重置为默认配置...';
                 configStatus.style.display = 'block';
-                var response = await fetch('/api/hot-config', { method: 'DELETE' });
+                var response = await fetch('/api/hot-config', {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Password': adminPassword }
+                });
                 var data = await response.json();
                 if (data.success) {
                     configStatus.className = 'config-status success';
                     configStatus.textContent = '✅ ' + data.message;
                     document.getElementById('apiKey').value = '';
-                    document.getElementById('apiUrl').value = '';
                     setTimeout(function() { loadHotConfig(); }, 500);
                     setTimeout(function() { configStatus.style.display = 'none'; }, 3000);
                 } else {
@@ -1577,7 +1611,7 @@
         async function startClone() {
             var textInput = document.getElementById('textInput');
             var personalApiKey = document.getElementById('personalApiKey');
-            var personalApiUrl = document.getElementById('personalApiUrl');
+            var personalApiCluster = document.getElementById('personalApiCluster');
             var text = textInput.value.trim();
 
             if (isProcessing) return;
@@ -1608,7 +1642,7 @@
             formData.append('audio_file', file);
             formData.append('text', text);
             formData.append('api_key', personalApiKey.value.trim());
-            formData.append('api_url', personalApiUrl.value.trim());
+            formData.append('api_cluster', personalApiCluster.value);
 
             try {
                 var response = await fetch('/clone', { method: 'POST', body: formData });
@@ -1636,7 +1670,7 @@
                     document.getElementById('debugInfo').style.display = 'block';
                     document.getElementById('sentText').textContent = data.sent_text || text;
                     document.getElementById('debugStyleTag').textContent = data.style_tag || '无';
-                    document.getElementById('debugApiUrl').textContent = personalApiUrl.value || '使用默认配置';
+                    document.getElementById('debugApiUrl').textContent = data.api_cluster ? (data.api_cluster + ' - ' + (data.api_url || '')) : '使用默认配置';
                     document.getElementById('debugModel').textContent = document.getElementById('currentModel').textContent || 'mimo-v2.5-tts-voiceclone';
                 } else {
                     document.getElementById('successMessage').style.display = 'none';

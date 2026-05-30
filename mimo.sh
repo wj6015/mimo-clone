@@ -36,6 +36,15 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error()   { echo -e "${RED}[ERR]${NC} $1"; }
 divider() { echo -e "${CYAN}============================================================${NC}"; }
 
+generate_password() {
+    local pwd
+    pwd=$(od -An -N12 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n' || true)
+    if [ -z "$pwd" ]; then
+        pwd="mimo-$(date +%s)"
+    fi
+    echo "$pwd"
+}
+
 # 检查 app.py 是否在运行
 is_app_running() {
     pgrep -f "python3 app.py" > /dev/null 2>&1
@@ -128,13 +137,23 @@ cmd_deploy() {
         warn "API Key 为空，可稍后在网页端配置"
     fi
 
+    # ------ 3. 交互式输入管理密码 ------
+    echo ""
+    echo -e "${YELLOW}【管理密码说明】${NC}"
+    echo "  用于网页端保存全局 API 配置，以及保护 /files 和 /delete 接口。"
+    echo "  留空将自动生成随机管理密码。"
+    echo ""
+    read -p "请输入管理密码（留空自动生成）: " USER_ADMIN_PASSWORD
+    local ADMIN_PASSWORD=${USER_ADMIN_PASSWORD:-$(generate_password)}
+    success "管理密码已设置: $ADMIN_PASSWORD"
+
     echo ""
 
-    # ------ 3. 安装系统依赖 ------
+    # ------ 4. 安装系统依赖 ------
     info "安装系统依赖..."
     install_packages
 
-    # ------ 4. 克隆/更新项目 ------
+    # ------ 5. 克隆/更新项目 ------
     info "获取项目代码..."
     if [ -d "$PROJECT_DIR" ]; then
         warn "项目目录已存在，更新代码..."
@@ -145,53 +164,87 @@ cmd_deploy() {
     fi
     success "项目代码就绪"
 
-    # ------ 5. 创建虚拟环境 ------
+    # ------ 6. 创建虚拟环境 ------
     info "创建 Python 虚拟环境..."
     if [ ! -d "$VENV_DIR" ]; then
         python3 -m venv "$VENV_DIR"
     fi
     success "虚拟环境就绪"
 
-    # ------ 6. 安装依赖 ------
+    # ------ 7. 安装依赖 ------
     info "安装 Python 依赖（首次较慢）..."
     "$VENV_PIP" install --upgrade pip > /dev/null 2>&1
     "$VENV_PIP" install -r "$PROJECT_DIR/requirements.txt"
     success "依赖安装完成"
 
-    # ------ 7. 创建目录 ------
+    # ------ 8. 创建目录 ------
     mkdir -p "$PROJECT_DIR/uploads" "$PROJECT_DIR/outputs"
     success "目录创建完成"
 
-    # ------ 8. 生成 config.json ------
-    info "生成配置文件..."
+    # ------ 9. 生成/补全 config.json ------
+    info "生成/补全配置文件..."
     "$VENV_PYTHON" -c "
 import json
-config = {
+from pathlib import Path
+
+config_path = Path('$CONFIG_FILE')
+defaults = {
     'api_url': 'https://token-plan-cn.xiaomimimo.com/v1/chat/completions',
+    'api_clusters': {
+        'cn': {
+            'label': 'CN 中国大陆',
+            'base_url': 'https://token-plan-cn.xiaomimimo.com/v1'
+        },
+        'sgp': {
+            'label': 'SGP 新加坡',
+            'base_url': 'https://token-plan-sgp.xiaomimimo.com/v1'
+        }
+    },
+    'default_api_cluster': 'cn',
     'model_name': 'mimo-v2.5-tts-voiceclone',
     'api_key': '$API_KEY',
+    'admin_password': '$ADMIN_PASSWORD',
     'port': $PORT,
     'host': '::',
     'max_file_size_mb': 50,
-    'allowed_extensions': ['wav', 'mp3', 'ogg', 'flac', 'webm', 'm4a'],
+    'allowed_extensions': ['wav', 'mp3'],
     'output_dir': 'outputs',
     'auto_cleanup_hours': 24,
     'default_text': '你好，这是声音克隆测试',
     'debug_mode': False
 }
-with open('$CONFIG_FILE', 'w') as f:
+
+config = {}
+if config_path.exists():
+    try:
+        config = json.loads(config_path.read_text(encoding='utf-8') or '{}')
+    except Exception:
+        config = {}
+
+for key, value in defaults.items():
+    if key not in config or config[key] is None:
+        config[key] = value
+
+if not config.get('api_clusters'):
+    config['api_clusters'] = defaults['api_clusters']
+if config.get('default_api_cluster') not in config.get('api_clusters', {}):
+    config['default_api_cluster'] = defaults['default_api_cluster']
+if 'admin_password' not in config or not config.get('admin_password'):
+    config['admin_password'] = '$ADMIN_PASSWORD'
+
+with open(config_path, 'w', encoding='utf-8') as f:
     json.dump(config, f, indent=4, ensure_ascii=False)
 print('OK')
 "
-    success "配置文件已生成: port=$PORT"
+    success "配置文件已就绪: $CONFIG_FILE"
 
-    # ------ 9. 防火墙放行 ------
+    # ------ 10. 防火墙放行 ------
     if command -v ip6tables > /dev/null 2>&1; then
         ip6tables -I INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null || true
         success "防火墙已放行端口 $PORT"
     fi
 
-    # ------ 10. 开机自启 ------
+    # ------ 11. 开机自启 ------
     sed -i '/mimo-clone/d' "$PROFILE_FILE" 2>/dev/null || true
     cat >> "$PROFILE_FILE" << AUTOEOF
 

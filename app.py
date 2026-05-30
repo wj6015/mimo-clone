@@ -14,6 +14,7 @@ import uuid
 import shutil
 import re
 import threading
+import time
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -36,6 +37,7 @@ config = {}
 # ==================== 热加载配置（文件存储，支持 Passenger 多进程）====================
 hot_config_file = Path(__file__).parent / 'hot_config.json'
 hot_config_lock = threading.Lock()
+CHAT_COMPLETIONS_PATH = '/chat/completions'
 
 
 def load_hot_config():
@@ -48,7 +50,7 @@ def load_hot_config():
                     return json.loads(content)
     except Exception as e:
         print(f"[WARN] 读取热配置文件失败: {e}")
-    return {'api_key': None, 'api_url': None}
+    return {'api_key': None, 'api_cluster': None}
 
 
 def save_hot_config_to_file(hot_config):
@@ -72,18 +74,63 @@ def get_effective_api_key():
     return config.get('api_key', '')
 
 
-def get_effective_api_url():
-    """获取有效的 API URL（热配置文件优先，其次 config.json）"""
+def get_api_clusters():
+    """获取允许使用的 API 集群白名单"""
+    return config.get('api_clusters') or {
+        'cn': {
+            'label': 'CN 中国大陆',
+            'base_url': 'https://token-plan-cn.xiaomimimo.com/v1'
+        },
+        'sgp': {
+            'label': 'SGP 新加坡',
+            'base_url': 'https://token-plan-sgp.xiaomimimo.com/v1'
+        }
+    }
+
+
+def normalize_api_endpoint(value):
+    """把 base_url 或完整 chat/completions URL 统一成完整 endpoint"""
+    if not value:
+        return ''
+    value = value.rstrip('/')
+    if value.endswith(CHAT_COMPLETIONS_PATH):
+        return value
+    return value + CHAT_COMPLETIONS_PATH
+
+
+def get_effective_api_cluster():
+    """获取有效的 API 集群（热配置文件优先，其次 config.json）"""
     with hot_config_lock:
         hot_config = load_hot_config()
-        if hot_config.get('api_url'):
-            return hot_config['api_url']
-    return config.get('api_url', '')
+        if hot_config.get('api_cluster') in get_api_clusters():
+            return hot_config['api_cluster']
+    default_cluster = config.get('default_api_cluster', 'cn')
+    return default_cluster if default_cluster in get_api_clusters() else 'cn'
+
+
+def get_effective_api_url(cluster=None):
+    """按白名单集群获取完整 API URL"""
+    clusters = get_api_clusters()
+    cluster = cluster or get_effective_api_cluster()
+    if cluster in clusters:
+        return normalize_api_endpoint(clusters[cluster].get('base_url', ''))
+    return normalize_api_endpoint(config.get('api_url', ''))
 
 
 def get_effective_model_name():
     """获取有效的模型名称（始终读取 config.json）"""
     return config.get('model_name', '')
+
+
+def require_admin_password():
+    """校验管理密码，保护配置和文件管理接口"""
+    admin_password = config.get('admin_password', '')
+    provided = request.headers.get('X-Admin-Password', '')
+    if not admin_password:
+        return False, jsonify({"success": False, "message": "未配置管理密码"}), 500
+    if provided != admin_password:
+        return False, jsonify({"success": False, "message": "管理密码错误或缺失"}), 401
+    return True, None, None
 
 
 # ==================== 配置加载 ====================
@@ -94,12 +141,24 @@ def load_config():
     
     defaults = {
         "api_url": "https://token-plan-cn.xiaomimimo.com/v1/chat/completions",
+        "api_clusters": {
+            "cn": {
+                "label": "CN 中国大陆",
+                "base_url": "https://token-plan-cn.xiaomimimo.com/v1"
+            },
+            "sgp": {
+                "label": "SGP 新加坡",
+                "base_url": "https://token-plan-sgp.xiaomimimo.com/v1"
+            }
+        },
+        "default_api_cluster": "cn",
         "model_name": "mimo-v2.5-tts-voiceclone",
         "api_key": "",
+        "admin_password": "",
         "port": 8080,
         "host": "0.0.0.0",
         "max_file_size_mb": 50,
-        "allowed_extensions": ["wav", "mp3", "ogg", "flac"],
+        "allowed_extensions": ["wav", "mp3"],
         "output_dir": "outputs",
         "auto_cleanup_hours": 24,
         "default_text": "你好，这是声音克隆测试",
@@ -137,6 +196,12 @@ def load_config():
     for key, value in defaults.items():
         if key not in config or config[key] is None:
             config[key] = value
+    if not config.get('api_clusters'):
+        config['api_clusters'] = defaults['api_clusters']
+    if config.get('default_api_cluster') not in config.get('api_clusters', {}):
+        config['default_api_cluster'] = 'cn'
+    config['api_url'] = get_effective_api_url(config.get('default_api_cluster', 'cn'))
+    app.config['MAX_CONTENT_LENGTH'] = int(config.get('max_file_size_mb', 50)) * 1024 * 1024
     
     # 创建必要目录
     try:
@@ -145,7 +210,7 @@ def load_config():
     except Exception as e:
         print(f"[WARN] 创建目录失败: {e}")
     
-    print(f"[OK] 配置加载完成 - API URL: {config.get('api_url', 'N/A')}")
+    print(f"[OK] 配置加载完成 - API URL: {get_effective_api_url()}")
     print(f"[OK] 配置加载完成 - Model: {config.get('model_name', 'N/A')}")
     print(f"[OK] 配置加载完成 - API Key: {'已配置' if config.get('api_key') else '未配置'}")
     
@@ -154,7 +219,7 @@ def load_config():
 
 def allowed_file(filename):
     """检查文件是否允许上传"""
-    allowed = config.get('allowed_extensions', ['wav', 'mp3', 'ogg', 'flac'])
+    allowed = config.get('allowed_extensions', ['wav', 'mp3'])
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in allowed
 
@@ -184,6 +249,38 @@ def cleanup_old_files():
                     print(f"[DEL] 已清理过期文件: {file_path.name}")
                 except:
                     pass
+
+
+def cleanup_upload_files():
+    """当 uploads 文件超过 10 个时，按时间删除最早的 10 个样本音频文件"""
+    upload_dir = Path('uploads')
+    if not upload_dir.exists():
+        return
+
+    files = [
+        p for p in upload_dir.iterdir()
+        if p.is_file() and p.name not in ('.gitkeep', 'gitkeep')
+    ]
+    if len(files) <= 10:
+        return
+
+    for file_path in sorted(files, key=lambda p: p.stat().st_mtime)[:10]:
+        try:
+            file_path.unlink()
+            print(f"[DEL] 已清理上传样本: {file_path.name}")
+        except Exception as e:
+            print(f"[WARN] 清理上传样本失败 {file_path.name}: {e}")
+
+
+def start_upload_cleanup_worker():
+    """后台每天清理一次 uploads 目录"""
+    def worker():
+        while True:
+            time.sleep(24 * 60 * 60)
+            cleanup_upload_files()
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
 
 
 def clone_voice(audio_path, text):
@@ -287,7 +384,7 @@ def clone_voice(audio_path, text):
         return {"success": False, "message": f"处理错误: {str(e)}", "details": None}
 
 
-def clone_voice_with_key(audio_path, text, request_api_key, request_api_url=''):
+def clone_voice_with_key(audio_path, text, request_api_key, request_api_cluster=''):
     """
     使用指定的 API Key 克隆声音（支持每人自带 Key）
     优先级：请求携带的 Key > 热配置 > config.json
@@ -298,15 +395,16 @@ def clone_voice_with_key(audio_path, text, request_api_key, request_api_url=''):
         if not api_key or api_key == 'YOUR_API_KEY_HERE':
             api_key = get_effective_api_key()
         
-        # 确定使用的 API URL（请求携带优先）
-        api_url = request_api_url if request_api_url else get_effective_api_url()
+        clusters = get_api_clusters()
+        api_cluster = request_api_cluster if request_api_cluster in clusters else get_effective_api_cluster()
+        api_url = get_effective_api_url(api_cluster)
         model_name = get_effective_model_name()
 
         if not api_key or api_key == 'YOUR_API_KEY_HERE':
             return {"success": False, "message": "API Key 无效", "details": "请输入有效的 API Key"}
 
         if not api_url:
-            return {"success": False, "message": "请先配置 API URL", "details": "可通过网页顶部「API 配置」面板输入"}
+            return {"success": False, "message": "请先配置 API 集群", "details": "请检查 config.json 中的 api_clusters 字段"}
 
         if not model_name:
             return {"success": False, "message": "请先配置模型名称", "details": "请检查 config.json 中的 model_name 字段"}
@@ -339,6 +437,7 @@ def clone_voice_with_key(audio_path, text, request_api_key, request_api_url=''):
         masked_key = api_key[:4] + '****' + api_key[-4:] if len(api_key) > 8 else '****'
         print(f"[*] 正在调用API克隆声音...")
         print(f"    API URL: {api_url}")
+        print(f"    API Cluster: {api_cluster}")
         print(f"    Model: {model_name}")
         print(f"    API Key: {masked_key}")
         print(f"    文本: {text[:100]}...")
@@ -370,7 +469,9 @@ def clone_voice_with_key(audio_path, text, request_api_key, request_api_url=''):
                             "file_size": len(audio_bytes) / 1024,
                             "sent_text": text,
                             "style_tag": style_tag,
-                            "main_text": main_text
+                            "main_text": main_text,
+                            "api_cluster": api_cluster,
+                            "api_url": api_url
                         }
             return {"success": False, "message": "API响应格式异常", "details": str(result)[:500]}
         else:
@@ -400,9 +501,10 @@ def get_hot_config():
     with hot_config_lock:
         hot_config_data = load_hot_config()
         api_key_source = 'hot' if hot_config_data.get('api_key') else 'config'
-        api_url_source = 'hot' if hot_config_data.get('api_url') else 'config'
+        api_cluster_source = 'hot' if hot_config_data.get('api_cluster') else 'config'
 
     effective_key = get_effective_api_key()
+    effective_cluster = get_effective_api_cluster()
     effective_url = get_effective_api_url()
     effective_model = get_effective_model_name()
 
@@ -416,10 +518,12 @@ def get_hot_config():
     return jsonify({
         "success": True,
         "api_key": masked_key,
+        "api_cluster": effective_cluster,
+        "api_clusters": get_api_clusters(),
         "api_url": effective_url,
         "model_name": effective_model,
         "api_key_source": api_key_source,
-        "api_url_source": api_url_source,
+        "api_cluster_source": api_cluster_source,
         "api_key_configured": bool(effective_key) and effective_key != 'YOUR_API_KEY_HERE'
     })
 
@@ -428,6 +532,10 @@ def get_hot_config():
 def set_hot_config():
     """热更新 API 配置（写入文件，支持多进程）"""
     try:
+        ok, response, status = require_admin_password()
+        if not ok:
+            return response, status
+
         data = request.json
         if not data:
             return jsonify({"success": False, "message": "请求数据为空"}), 400
@@ -443,13 +551,13 @@ def set_hot_config():
                 hot_config_data['api_key'] = val if val else None
                 updated_fields.append('api_key')
 
-            if 'api_url' in data or 'apiUrl' in data:
-                val = data.get('api_url') or data.get('apiUrl') or ''
+            if 'api_cluster' in data or 'apiCluster' in data:
+                val = data.get('api_cluster') or data.get('apiCluster') or ''
                 val = val.strip() if val else ''
-                if val.endswith('/'):
-                    val = val.rstrip('/')
-                hot_config_data['api_url'] = val if val else None
-                updated_fields.append('api_url')
+                if val and val not in get_api_clusters():
+                    return jsonify({"success": False, "message": "无效的 API 集群"}), 400
+                hot_config_data['api_cluster'] = val if val else None
+                updated_fields.append('api_cluster')
 
             save_hot_config_to_file(hot_config_data)
 
@@ -471,8 +579,12 @@ def set_hot_config():
 def reset_hot_config():
     """重置热加载配置"""
     try:
+        ok, response, status = require_admin_password()
+        if not ok:
+            return response, status
+
         with hot_config_lock:
-            save_hot_config_to_file({'api_key': None, 'api_url': None})
+            save_hot_config_to_file({'api_key': None, 'api_cluster': None})
         print("[更新] 热加载配置已重置")
         return jsonify({"success": True, "message": "已重置为 config.json 配置"})
     except Exception as e:
@@ -489,9 +601,11 @@ def clone():
         file = request.files['audio_file']
         text = request.form.get('text', '').strip()
         
-        # 获取请求中携带的 API Key 和 URL（每人各自的 Key）
+        # 获取请求中携带的 API Key 和集群（每人各自的 Key）
         request_api_key = request.form.get('api_key', '').strip()
-        request_api_url = request.form.get('api_url', '').strip()
+        request_api_cluster = request.form.get('api_cluster', '').strip()
+        if request_api_cluster and request_api_cluster not in get_api_clusters():
+            return jsonify({"success": False, "message": "无效的 API 集群"}), 400
         
         if file.filename == '':
             return jsonify({"success": False, "message": "未选择文件"}), 400
@@ -506,7 +620,7 @@ def clone():
                 return jsonify({"success": False, "message": "请输入你的 API Key"}), 400
         
         if not allowed_file(file.filename):
-            allowed = ', '.join(config.get('allowed_extensions', ['wav', 'mp3', 'ogg', 'flac']))
+            allowed = ', '.join(config.get('allowed_extensions', ['wav', 'mp3']))
             return jsonify({"success": False, "message": f"不支持的文件类型，允许: {allowed}"}), 400
         
         filename = secure_filename(file.filename)
@@ -522,7 +636,7 @@ def clone():
             return jsonify({"success": False, "message": f"文件太大，最大: {config.get('max_file_size_mb', 50)}MB"}), 400
         
         # 使用带个人 Key 的克隆函数
-        result = clone_voice_with_key(upload_path, text, request_api_key, request_api_url)
+        result = clone_voice_with_key(upload_path, text, request_api_key, request_api_cluster)
         return jsonify(result)
     
     except Exception as e:
@@ -533,6 +647,7 @@ def clone():
 def download_file(filename):
     """下载文件"""
     try:
+        filename = secure_filename(filename)
         output_dir = Path(config.get('output_dir', 'outputs'))
         file_path = output_dir / filename
         
@@ -561,6 +676,7 @@ def download_file(filename):
 def preview_file(filename):
     """预览音频文件"""
     try:
+        filename = secure_filename(filename)
         output_dir = Path(config.get('output_dir', 'outputs'))
         file_path = output_dir / filename
         
@@ -595,6 +711,10 @@ def preview_file(filename):
 def list_files():
     """列出所有输出文件"""
     try:
+        ok, response, status = require_admin_password()
+        if not ok:
+            return response, status
+
         output_dir = Path(config.get('output_dir', 'outputs'))
         files = []
         if output_dir.exists():
@@ -617,6 +737,11 @@ def list_files():
 def delete_file(filename):
     """删除输出文件"""
     try:
+        ok, response, status = require_admin_password()
+        if not ok:
+            return response, status
+
+        filename = secure_filename(filename)
         output_dir = Path(config.get('output_dir', 'outputs'))
         file_path = output_dir / filename
         if file_path.exists():
@@ -635,11 +760,12 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "config": {
-            "api_url": get_effective_api_url(),
-            "model_name": get_effective_model_name(),
-            "api_key_configured": bool(api_key) and api_key != 'YOUR_API_KEY_HERE',
-            "port": config.get('port', 8080)
+            "config": {
+                "api_url": get_effective_api_url(),
+                "api_cluster": get_effective_api_cluster(),
+                "model_name": get_effective_model_name(),
+                "api_key_configured": bool(api_key) and api_key != 'YOUR_API_KEY_HERE',
+                "port": config.get('port', 8080)
         }
     })
 
@@ -680,6 +806,8 @@ load_config()
 try:
     Path(config.get('output_dir', 'outputs')).mkdir(exist_ok=True)
     Path('uploads').mkdir(exist_ok=True)
+    cleanup_upload_files()
+    start_upload_cleanup_worker()
 except:
     pass
 
@@ -698,7 +826,7 @@ if __name__ == '__main__':
     print(f"[DIR]  上传目录: uploads/")
     print(f"[DIR]  输出目录: {config.get('output_dir', 'outputs')}/")
     print(f"[KEY]  API Key: {'已配置' if key_configured else '[WARN] 未配置'}")
-    print(f"[WEB]  API URL: {config.get('api_url', 'N/A')}")
+    print(f"[WEB]  API URL: {get_effective_api_url()}")
     print(f"[PKG]  Model:   {config.get('model_name', 'N/A')}")
     print("=" * 60)
     

@@ -141,7 +141,8 @@ header {
     position: relative;
 }
 
-.config-field input {
+.config-field input,
+.config-field select {
     width: 100%;
     padding: 12px 14px 12px 40px;
     border: 1px solid #ced4da;
@@ -151,7 +152,8 @@ header {
     background: white;
 }
 
-.config-field input:focus {
+.config-field input:focus,
+.config-field select:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);

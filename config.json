@@ -1,17 +1,25 @@
 {
     "api_url": "https://token-plan-cn.xiaomimimo.com/v1/chat/completions",
+    "api_clusters": {
+        "cn": {
+            "label": "CN 中国大陆",
+            "base_url": "https://token-plan-cn.xiaomimimo.com/v1"
+        },
+        "sgp": {
+            "label": "SGP 新加坡",
+            "base_url": "https://token-plan-sgp.xiaomimimo.com/v1"
+        }
+    },
+    "default_api_cluster": "cn",
     "model_name": "mimo-v2.5-tts-voiceclone",
     "api_key": "tp-caii5jouxz3vxfjssxaxe260pk9ssxesvsspq1tpjblb5v0w",
+    "admin_password": "0000Aaaa",
     "port": 80,
     "host": "::",
     "max_file_size_mb": 50,
     "allowed_extensions": [
         "wav",
-        "mp3",
-        "ogg",
-        "flac",
-        "webm",
-        "m4a"
+        "mp3"
     ],
     "output_dir": "outputs",
     "auto_cleanup_hours": 24,
