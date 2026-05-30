@@ -2,12 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>MiMo 声音克隆平台</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* API 配置面板样式 */
+        /* ===== API 配置面板样式 ===== */
         .config-panel {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             margin: 20px;
@@ -90,15 +90,14 @@
             font-size: 13px;
             transition: all 0.3s;
             background: white;
+            box-sizing: border-box;
         }
         .config-field input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
         }
-        .config-field input::placeholder {
-            color: #adb5bd;
-        }
+        .config-field input::placeholder { color: #adb5bd; }
         .config-field .input-icon {
             position: absolute;
             left: 14px;
@@ -113,10 +112,7 @@
             align-items: center;
             margin-top: 8px;
         }
-        .config-buttons {
-            display: flex;
-            gap: 10px;
-        }
+        .config-buttons { display: flex; gap: 10px; }
         .config-status {
             font-size: 12px;
             padding: 6px 12px;
@@ -124,24 +120,9 @@
             display: none;
             max-width: 250px;
         }
-        .config-status.success {
-            display: block;
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .config-status.error {
-            display: block;
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .config-status.info {
-            display: block;
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
+        .config-status.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .config-status.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .config-status.info { display: block; background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         .config-btn {
             padding: 10px 24px;
             border: none;
@@ -159,19 +140,9 @@
             color: white;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
-        .config-btn.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        }
-        .config-btn.secondary {
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-        }
-        .config-btn.secondary:hover {
-            background: #e9ecef;
-            color: #495057;
-        }
+        .config-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4); }
+        .config-btn.secondary { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+        .config-btn.secondary:hover { background: #e9ecef; color: #495057; }
         .config-info {
             margin-top: 16px;
             padding: 14px;
@@ -182,34 +153,13 @@
             line-height: 1.8;
             color: #2e7d32;
         }
-        .config-info strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-        .config-info code {
-            background: rgba(0,0,0,0.05);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            word-break: break-all;
-        }
-        .config-source {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        .config-source.hot {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-        .config-source.config {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
-        /* 个人 API Key 输入区域样式 */
+        .config-info strong { display: block; margin-bottom: 4px; }
+        .config-info code { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; font-size: 11px; word-break: break-all; }
+        .config-source { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+        .config-source.hot { background: #e3f2fd; color: #1565c0; }
+        .config-source.config { background: #f3e5f5; color: #7b1fa2; }
+
+        /* ===== 个人 API Key 样式 ===== */
         .personal-key-section {
             background: #fff;
             border-radius: 12px;
@@ -220,30 +170,11 @@
             border: 2px solid #667eea;
             box-shadow: 0 2px 10px rgba(102, 126, 234, 0.15);
         }
-        .personal-key-form {
-            display: grid;
-            gap: 12px;
-        }
-        .personal-key-field {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .personal-key-field label {
-            width: 90px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #495057;
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .personal-key-field .required {
-            color: #ff4757;
-        }
-        .personal-key-field .input-wrapper {
-            flex: 1;
-            position: relative;
-        }
+        .personal-key-form { display: grid; gap: 12px; }
+        .personal-key-field { display: flex; align-items: center; gap: 10px; }
+        .personal-key-field label { width: 90px; font-size: 13px; font-weight: 500; color: #495057; text-align: right; flex-shrink: 0; }
+        .personal-key-field .required { color: #ff4757; }
+        .personal-key-field .input-wrapper { flex: 1; position: relative; }
         .personal-key-field input {
             width: 100%;
             padding: 12px 14px 12px 40px;
@@ -252,78 +183,242 @@
             font-size: 13px;
             transition: all 0.3s;
             background: white;
+            box-sizing: border-box;
         }
-        .personal-key-field input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        .personal-key-field input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25); }
+        .personal-key-field .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6c757d; font-size: 14px; }
+        .toggle-key-btn { padding: 10px !important; min-width: 40px; display: flex; align-items: center; justify-content: center; }
+        .personal-key-hint { padding: 10px 14px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #ffc107; margin-top: 4px; }
+        .personal-key-hint p { margin: 0; font-size: 12px; color: #795548; }
+        .personal-key-hint i { color: #ff9800; margin-right: 6px; }
+
+        /* ===== 音源切换 Tab ===== */
+        .source-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            background: #f1f3f5;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
         }
-        .personal-key-field .input-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
+        .source-tab {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            background: transparent;
             font-size: 14px;
-        }
-        .toggle-key-btn {
-            padding: 10px !important;
-            min-width: 40px;
+            font-weight: 500;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 8px;
         }
-        .personal-key-hint {
-            padding: 10px 14px;
-            background: #fff8e1;
-            border-radius: 8px;
-            border-left: 4px solid #ffc107;
-            margin-top: 4px;
+        .source-tab.active {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
-        .personal-key-hint p {
-            margin: 0;
+        .source-tab:hover:not(.active) { background: #e9ecef; color: #495057; }
+
+        /* ===== 录音界面 ===== */
+        .record-panel {
+            display: none;
+            background: #fff;
+            border: 2px dashed #dee2e6;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .record-panel.active { display: block; }
+
+        /* 波形画布 */
+        .waveform-container {
+            width: 100%;
+            max-width: 500px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #dee2e6;
+        }
+        .waveform-container canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .waveform-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #adb5bd;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .waveform-placeholder.hidden { display: none; }
+
+        /* 计时器 */
+        .recording-timer {
+            font-size: 36px;
+            font-weight: 700;
+            color: #495057;
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        .recording-timer.recording { color: #ff4757; }
+        .max-duration-hint {
             font-size: 12px;
-            color: #795548;
+            color: #adb5bd;
+            margin-bottom: 24px;
         }
-        .personal-key-hint i {
-            color: #ff9800;
-            margin-right: 6px;
+
+        /* 录音按钮 */
+        .record-btn-wrapper { margin-bottom: 20px; }
+        .record-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #dee2e6;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
+        .record-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+        .record-btn:active { transform: scale(0.95); }
+        .record-btn.recording {
+            background: #ff4757;
+            border-color: #ff4757;
+            color: #fff;
+            animation: pulse-record 1.5s ease-in-out infinite;
+        }
+        .record-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        @keyframes pulse-record {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
+        }
+
+        /* 录音状态文字 */
+        .record-status {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+        .record-status.error { color: #ff4757; }
+        .record-status.success { color: #2ed573; }
+
+        /* 录音预览区域 */
+        .record-preview {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .record-preview.active { display: block; }
+        .record-preview-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 12px;
+        }
+        .record-preview audio {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+        }
+        .record-preview-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .record-action-btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+        }
+        .record-action-btn.use {
+            background: linear-gradient(135deg, #2ed573, #17c964);
+            color: white;
+            box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
+        }
+        .record-action-btn.use:hover { transform: translateY(-2px); }
+        .record-action-btn.retry {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        .record-action-btn.retry:hover { background: #e9ecef; color: #495057; }
+
+        /* 已录制标记 */
+        .record-indicator {
+            display: none;
+            padding: 10px 16px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border: 1px solid #c8e6c9;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #2e7d32;
+            align-items: center;
+            gap: 8px;
+        }
+        .record-indicator.active { display: flex; }
+        .record-indicator i { color: #4caf50; }
+
+        /* ===== 移动端适配 ===== */
         @media (max-width: 768px) {
-            .personal-key-field {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 6px;
-            }
-            .personal-key-field label {
-                width: 100%;
-                text-align: left;
-            }
-            .config-field {
-                flex-direction: column;
-                gap: 6px;
-            }
-            .config-field label {
-                width: 100%;
-                text-align: left;
-                padding-top: 0;
-            }
-            .config-actions {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .config-status {
-                max-width: 100%;
-                text-align: center;
-            }
-            .config-buttons {
-                width: 100%;
-                flex-direction: column;
-            }
-            .config-btn {
-                width: 100%;
-                justify-content: center;
-            }
+            .config-field { flex-direction: column; gap: 6px; }
+            .config-field label { width: 100%; text-align: left; padding-top: 0; }
+            .config-actions { flex-direction: column; gap: 10px; }
+            .config-status { max-width: 100%; text-align: center; }
+            .config-buttons { width: 100%; flex-direction: column; }
+            .config-btn { width: 100%; justify-content: center; }
+            .personal-key-field { flex-direction: column; align-items: stretch; gap: 6px; }
+            .personal-key-field label { width: 100%; text-align: left; }
+            .waveform-container { height: 80px; }
+            .recording-timer { font-size: 28px; }
+            .record-btn { width: 70px; height: 70px; font-size: 24px; }
+            .record-preview-actions { flex-direction: column; }
+            .record-action-btn { width: 100%; justify-content: center; }
+            .source-tab { padding: 12px 10px; font-size: 13px; }
+        }
+        @media (max-width: 360px) {
+            .waveform-container { height: 60px; }
+            .recording-timer { font-size: 24px; }
+            .record-btn { width: 60px; height: 60px; font-size: 20px; }
         }
     </style>
 </head>
@@ -337,7 +432,13 @@
             <p class="subtitle">基于小米MiMo-v2.5-TTS-VoiceClone的声音克隆服务</p>
         </header>
 
-        <!-- API 配置面板（管理员配置全局默认值） -->
+        <!-- iOS 提示条 -->
+        <div id="iosHint" style="display:none; margin:20px; padding:14px 18px; background:#fff3cd; border:1px solid #ffc107; border-radius:10px; font-size:13px; color:#856404; line-height:1.6;">
+            <i class="fas fa-exclamation-triangle" style="color:#ff9800;"></i>
+            <strong>iOS 用户提示：</strong>录音功能请使用 <strong>Safari</strong> 浏览器打开本页面，iOS 上的 Chrome/Firefox 可能存在兼容性问题。你也可以使用「上传文件」功能。
+        </div>
+
+        <!-- API 配置面板 -->
         <div class="config-panel">
             <div class="config-header" onclick="toggleConfigPanel()">
                 <h3><i class="fas fa-cog"></i> API 配置 <small>（热加载，无需重启）</small></h3>
@@ -381,32 +482,82 @@
         </div>
 
         <main>
-            <!-- 上传参考音频 -->
+            <!-- 上传/录制 参考音频 -->
             <div class="upload-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-upload"></i> 上传参考音频</h2>
-                    <p>上传一个音频文件作为声音克隆的参考</p>
+                    <h2><i class="fas fa-upload"></i> 参考音频</h2>
+                    <p>上传文件或录制一段音频作为声音克隆的参考</p>
                 </div>
-                <div class="upload-area" id="uploadArea">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>拖放音频文件到这里，或点击选择文件</p>
-                    <p class="hint">支持的格式: WAV, MP3, OGG, FLAC (最大 {{ config.max_file_size_mb }}MB)</p>
-                    <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.flac" hidden>
-                    <button class="btn" id="selectFileBtn">
-                        <i class="fas fa-folder-open"></i> 选择文件
+
+                <!-- Tab 切换 -->
+                <div class="source-tabs">
+                    <button class="source-tab active" data-source="upload" onclick="switchSource('upload')">
+                        <i class="fas fa-cloud-upload-alt"></i> 上传文件
+                    </button>
+                    <button class="source-tab" data-source="record" onclick="switchSource('record')">
+                        <i class="fas fa-microphone"></i> 录制音频
                     </button>
                 </div>
-                <div class="file-info" id="fileInfo" style="display: none;">
-                    <div class="file-preview">
-                        <i class="fas fa-music"></i>
-                        <div class="file-details">
-                            <p id="fileName">文件名: </p>
-                            <p id="fileSize">大小: </p>
-                            <p id="fileType">类型: </p>
-                        </div>
-                        <button class="btn btn-danger" id="removeFileBtn">
-                            <i class="fas fa-times"></i>
+
+                <!-- 上传面板 -->
+                <div class="upload-panel" id="uploadPanel" style="display: block; border-radius: 0 0 12px 12px;">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>拖放音频文件到这里，或点击选择文件</p>
+                        <p class="hint">支持的格式: WAV, MP3, OGG, FLAC, WEBM, M4A (最大 {{ config.max_file_size_mb }}MB)</p>
+                        <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.flac,.webm,.m4a" hidden>
+                        <button class="btn" id="selectFileBtn">
+                            <i class="fas fa-folder-open"></i> 选择文件
                         </button>
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-preview">
+                            <i class="fas fa-music"></i>
+                            <div class="file-details">
+                                <p id="fileName">文件名: </p>
+                                <p id="fileSize">大小: </p>
+                                <p id="fileType">类型: </p>
+                            </div>
+                            <button class="btn btn-danger" id="removeFileBtn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 录制面板 -->
+                <div class="record-panel" id="recordPanel">
+                    <div class="waveform-container" id="waveformContainer">
+                        <canvas id="waveformCanvas"></canvas>
+                        <div class="waveform-placeholder" id="waveformPlaceholder">
+                            <i class="fas fa-wave-square"></i> 等待录音...
+                        </div>
+                    </div>
+                    <div class="recording-timer" id="recordingTimer">00:00</div>
+                    <div class="max-duration-hint">最长录制 60 秒</div>
+                    <div class="record-btn-wrapper">
+                        <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
+                            <i class="fas fa-microphone" id="recordBtnIcon"></i>
+                        </button>
+                    </div>
+                    <div class="record-status" id="recordStatus">点击麦克风按钮开始录音</div>
+                    <div class="record-preview" id="recordPreview">
+                        <div class="record-preview-header">
+                            <i class="fas fa-headphones"></i> 录音预览
+                        </div>
+                        <audio id="recordAudioPlayer" controls preload="auto"></audio>
+                        <div class="record-preview-actions">
+                            <button class="record-action-btn use" onclick="useRecording()">
+                                <i class="fas fa-check"></i> 使用这段录音
+                            </button>
+                            <button class="record-action-btn retry" onclick="retryRecording()">
+                                <i class="fas fa-redo"></i> 重新录制
+                            </button>
+                        </div>
+                    </div>
+                    <div class="record-indicator" id="recordIndicator">
+                        <i class="fas fa-check-circle"></i>
+                        <span>已录制一段音频，可直接开始克隆</span>
                     </div>
                 </div>
             </div>
@@ -618,7 +769,7 @@
                 </button>
             </div>
 
-            <!-- 个人 API Key 输入（可选，填了优先用自己的，留空则用管理员配置的） -->
+            <!-- 个人 API Key -->
             <div class="personal-key-section">
                 <div class="section-header">
                     <h2><i class="fas fa-user-shield"></i> 你的 API Key</h2>
@@ -668,9 +819,7 @@
                     </div>
                     <div class="audio-player" id="audioPlayer" style="display: none;">
                         <h4><i class="fas fa-headphones"></i> 预览克隆声音:</h4>
-                        <audio id="audioElement" controls preload="auto">
-                            您的浏览器不支持音频播放
-                        </audio>
+                        <audio id="audioElement" controls preload="auto">您的浏览器不支持音频播放</audio>
                     </div>
                     <div class="download-section" id="downloadSection" style="display: none;">
                         <h4><i class="fas fa-download"></i> 下载链接:</h4>
@@ -723,16 +872,469 @@
     </div>
 
     <script>
-        // ===== 全局变量 =====
-        let selectedStyles = [];
-        let isProcessing = false;
-        let lastPreviewUrl = '';
-        
-        // ===== API 配置热加载功能 =====
-        
+        // ============================================================
+        //  全局变量
+        // ============================================================
+        var selectedStyles = [];
+        var isProcessing = false;
+        var lastPreviewUrl = '';
+
+        // 录音相关全局变量
+        var recordedBlob = null;
+        var recordedExt = 'wav';
+        var recordedMimeType = '';
+        var mediaRecorder = null;
+        var audioStream = null;
+        var audioContext = null;
+        var analyserNode = null;
+        var animationId = null;
+        var timerInterval = null;
+        var recordingSeconds = 0;
+        var isRecording = false;
+        var recordedChunks = [];
+        var MAX_DURATION = 60;
+
+        // ============================================================
+        //  音源切换 Tab
+        // ============================================================
+        function switchSource(source) {
+            document.querySelectorAll('.source-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelector('.source-tab[data-source="' + source + '"]').classList.add('active');
+
+            var uploadPanel = document.getElementById('uploadPanel');
+            var recordPanel = document.getElementById('recordPanel');
+
+            if (source === 'upload') {
+                uploadPanel.style.display = 'block';
+                recordPanel.classList.remove('active');
+            } else {
+                uploadPanel.style.display = 'none';
+                recordPanel.classList.add('active');
+                if (recordedBlob && !document.getElementById('recordPreview').classList.contains('active')) {
+                    document.getElementById('recordIndicator').classList.add('active');
+                }
+                initWaveformCanvas();
+            }
+        }
+
+        // ============================================================
+        //  波形画布初始化
+        // ============================================================
+        function initWaveformCanvas() {
+            var canvas = document.getElementById('waveformCanvas');
+            var container = document.getElementById('waveformContainer');
+            var dpr = window.devicePixelRatio || 1;
+            canvas.width = container.clientWidth * dpr;
+            canvas.height = container.clientHeight * dpr;
+            var ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, container.clientWidth, container.clientHeight);
+        }
+
+        // ============================================================
+        //  录音转 WAV
+        // ============================================================
+        function writeString(view, offset, string) {
+            for (var i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function audioBufferToWav(buffer) {
+            var numChannels = buffer.numberOfChannels;
+            var sampleRate = buffer.sampleRate;
+            var format = 1;
+            var bitDepth = 16;
+            var bytesPerSample = bitDepth / 8;
+            var blockAlign = numChannels * bytesPerSample;
+            var dataLength = buffer.length * blockAlign;
+            var headerLength = 44;
+            var totalLength = headerLength + dataLength;
+
+            var arrayBuffer = new ArrayBuffer(totalLength);
+            var view = new DataView(arrayBuffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, totalLength - 8, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataLength, true);
+
+            var offset = 44;
+            var channels = [];
+            for (var c = 0; c < numChannels; c++) {
+                channels.push(buffer.getChannelData(c));
+            }
+
+            for (var i = 0; i < buffer.length; i++) {
+                for (var ch = 0; ch < numChannels; ch++) {
+                    var sample = Math.max(-1, Math.min(1, channels[ch][i]));
+                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(offset, sample, true);
+                    offset += 2;
+                }
+            }
+
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        function convertBlobToWav(blob) {
+            return new Promise(function(resolve, reject) {
+                var tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var reader = new FileReader();
+                reader.onload = function() {
+                    tempCtx.decodeAudioData(reader.result, function(audioBuffer) {
+                        var wavBlob = audioBufferToWav(audioBuffer);
+                        tempCtx.close();
+                        resolve(wavBlob);
+                    }, function(err) {
+                        tempCtx.close();
+                        reject(err);
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(blob);
+            });
+        }
+
+        // ============================================================
+        //  检测支持的录音格式
+        // ============================================================
+        function getSupportedMimeType() {
+            var types = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+                'audio/aac',
+                'audio/ogg;codecs=opus'
+            ];
+            for (var i = 0; i < types.length; i++) {
+                if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(types[i])) {
+                    return types[i];
+                }
+            }
+            return '';
+        }
+
+        function getExtensionFromMimeType(mime) {
+            if (mime.indexOf('webm') !== -1) return 'webm';
+            if (mime.indexOf('mp4') !== -1) return 'm4a';
+            if (mime.indexOf('aac') !== -1) return 'aac';
+            if (mime.indexOf('ogg') !== -1) return 'ogg';
+            return 'webm';
+        }
+
+        // ============================================================
+        //  录音核心功能
+        // ============================================================
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            var recordStatus = document.getElementById('recordStatus');
+            var recordBtn = document.getElementById('recordBtn');
+            var recordBtnIcon = document.getElementById('recordBtnIcon');
+            var waveformPlaceholder = document.getElementById('waveformPlaceholder');
+
+            // 兼容 iOS Chrome
+            var mediaDevices = navigator.mediaDevices ||
+                               (window.navigator && window.navigator.mediaDevices) || null;
+
+            if (!mediaDevices || typeof mediaDevices.getUserMedia !== 'function') {
+                var isSecure = location.protocol === 'https:';
+                recordStatus.className = 'record-status error';
+                if (!isSecure) {
+                    recordStatus.textContent = '❌ 录音需要 HTTPS 连接，请使用 https:// 访问本页面';
+                } else {
+                    recordStatus.textContent = '❌ 当前浏览器不支持录音，请使用 Safari 或 Chrome 最新版本，或使用「上传文件」';
+                }
+                return;
+            }
+
+            if (typeof MediaRecorder === 'undefined') {
+                recordStatus.className = 'record-status error';
+                recordStatus.textContent = '❌ 当前浏览器不支持 MediaRecorder，请使用「上传文件」';
+                return;
+            }
+
+            recordedMimeType = getSupportedMimeType();
+            if (!recordedMimeType) {
+                recordStatus.className = 'record-status error';
+                recordStatus.textContent = '❌ 没有可用的录音格式，请使用上传文件';
+                return;
+            }
+            recordedExt = getExtensionFromMimeType(recordedMimeType);
+
+            document.getElementById('recordPreview').classList.remove('active');
+            document.getElementById('recordIndicator').classList.remove('active');
+            recordedBlob = null;
+
+            try {
+                audioStream = await mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                var source = audioContext.createMediaStreamSource(audioStream);
+                analyserNode = audioContext.createAnalyser();
+                analyserNode.fftSize = 2048;
+                source.connect(analyserNode);
+
+                initWaveformCanvas();
+                waveformPlaceholder.classList.add('hidden');
+
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(audioStream, { mimeType: recordedMimeType });
+
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = function() {
+                    onRecordingComplete();
+                };
+
+                mediaRecorder.start(100);
+
+                isRecording = true;
+                recordBtn.classList.add('recording');
+                recordBtnIcon.className = 'fas fa-stop';
+                recordStatus.className = 'record-status';
+                recordStatus.textContent = '🔴 录音中... 点击按钮停止';
+
+                recordingSeconds = 0;
+                updateTimerDisplay();
+                timerInterval = setInterval(function() {
+                    recordingSeconds++;
+                    updateTimerDisplay();
+                    if (recordingSeconds >= MAX_DURATION) {
+                        stopRecording();
+                    }
+                }, 1000);
+
+                drawWaveform();
+
+            } catch (err) {
+                console.error('录音失败:', err);
+                recordStatus.className = 'record-status error';
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    recordStatus.textContent = '❌ 麦克风权限被拒绝。请在浏览器设置中允许麦克风访问';
+                } else if (err.name === 'NotFoundError') {
+                    recordStatus.textContent = '❌ 未找到麦克风设备';
+                } else if (err.name === 'NotReadableError') {
+                    recordStatus.textContent = '❌ 麦克风被其他应用占用，请关闭其他使用麦克风的应用后重试';
+                } else {
+                    recordStatus.textContent = '❌ 录音失败: ' + err.message;
+                }
+                cleanupRecording();
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+
+            var recordBtn = document.getElementById('recordBtn');
+            var recordBtnIcon = document.getElementById('recordBtnIcon');
+            recordBtn.classList.remove('recording');
+            recordBtnIcon.className = 'fas fa-microphone';
+            recordBtn.disabled = true;
+
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+
+            document.getElementById('recordStatus').className = 'record-status';
+            document.getElementById('recordStatus').textContent = '⏳ 正在转换为 WAV 格式...';
+        }
+
+        function onRecordingComplete() {
+            var rawBlob = new Blob(recordedChunks, { type: recordedMimeType });
+            recordedChunks = [];
+
+            cleanupRecording();
+
+            document.getElementById('recordStatus').className = 'record-status';
+            document.getElementById('recordStatus').textContent = '⏳ 正在转换为 WAV 格式...';
+
+            convertBlobToWav(rawBlob).then(function(wavBlob) {
+                recordedBlob = wavBlob;
+                recordedExt = 'wav';
+                recordedMimeType = 'audio/wav';
+
+                document.getElementById('recordBtn').disabled = false;
+
+                var audioPlayer = document.getElementById('recordAudioPlayer');
+                var audioUrl = URL.createObjectURL(recordedBlob);
+                audioPlayer.src = audioUrl;
+
+                document.getElementById('recordPreview').classList.add('active');
+                var recordStatus = document.getElementById('recordStatus');
+                recordStatus.className = 'record-status success';
+                var sizeKB = (recordedBlob.size / 1024).toFixed(1);
+                recordStatus.textContent = '✅ 录音完成，已转换为 WAV (' + recordingSeconds + '秒, ' + sizeKB + 'KB)';
+
+            }).catch(function(err) {
+                console.error('WAV 转换失败:', err);
+                recordedBlob = rawBlob;
+                recordedExt = getExtensionFromMimeType(recordedMimeType);
+                document.getElementById('recordBtn').disabled = false;
+
+                var audioPlayer = document.getElementById('recordAudioPlayer');
+                var audioUrl = URL.createObjectURL(recordedBlob);
+                audioPlayer.src = audioUrl;
+
+                document.getElementById('recordPreview').classList.add('active');
+                var recordStatus = document.getElementById('recordStatus');
+                recordStatus.className = 'record-status error';
+                recordStatus.textContent = '⚠️ WAV 转换失败，使用原始格式（API 可能不支持）';
+            });
+        }
+
+        function useRecording() {
+            document.getElementById('recordPreview').classList.remove('active');
+            document.getElementById('recordIndicator').classList.add('active');
+            document.getElementById('recordStatus').className = 'record-status success';
+            document.getElementById('recordStatus').textContent = '✅ 已选定录音（WAV），可点击下方「开始克隆声音」';
+
+            document.getElementById('audioFile').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+        }
+
+        function retryRecording() {
+            recordedBlob = null;
+            document.getElementById('recordPreview').classList.remove('active');
+            document.getElementById('recordIndicator').classList.remove('active');
+            document.getElementById('recordingTimer').textContent = '00:00';
+            document.getElementById('recordingTimer').classList.remove('recording');
+            document.getElementById('recordStatus').className = 'record-status';
+            document.getElementById('recordStatus').textContent = '点击麦克风按钮开始录音';
+
+            initWaveformCanvas();
+            document.getElementById('waveformPlaceholder').classList.remove('hidden');
+        }
+
+        function cleanupRecording() {
+            if (audioStream) {
+                audioStream.getTracks().forEach(function(track) { track.stop(); });
+                audioStream = null;
+            }
+            if (audioContext) {
+                audioContext.close().catch(function() {});
+                audioContext = null;
+            }
+            analyserNode = null;
+        }
+
+        // ============================================================
+        //  波形绘制
+        // ============================================================
+        function drawWaveform() {
+            if (!analyserNode) return;
+
+            var canvas = document.getElementById('waveformCanvas');
+            var container = document.getElementById('waveformContainer');
+            var ctx = canvas.getContext('2d');
+            var width = container.clientWidth;
+            var height = container.clientHeight;
+            var bufferLength = analyserNode.frequencyBinCount;
+            var dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                if (!isRecording) return;
+                animationId = requestAnimationFrame(draw);
+
+                analyserNode.getByteTimeDomainData(dataArray);
+
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.strokeStyle = 'rgba(102, 126, 234, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#667eea';
+                ctx.beginPath();
+
+                var sliceWidth = width / bufferLength;
+                var x = 0;
+
+                for (var i = 0; i < bufferLength; i++) {
+                    var v = dataArray[i] / 128.0;
+                    var y = (v * height) / 2;
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    x += sliceWidth;
+                }
+
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = 'rgba(102, 126, 234, 0.2)';
+                ctx.beginPath();
+                x = 0;
+                for (var j = 0; j < bufferLength; j++) {
+                    var vv = dataArray[j] / 128.0;
+                    var yy = (vv * height) / 2;
+                    if (j === 0) { ctx.moveTo(x, yy); } else { ctx.lineTo(x, yy); }
+                    x += sliceWidth;
+                }
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+            }
+
+            draw();
+        }
+
+        // ============================================================
+        //  计时器
+        // ============================================================
+        function updateTimerDisplay() {
+            var minutes = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
+            var seconds = (recordingSeconds % 60).toString().padStart(2, '0');
+            var timerEl = document.getElementById('recordingTimer');
+            timerEl.textContent = minutes + ':' + seconds;
+            if (isRecording) {
+                timerEl.classList.add('recording');
+            } else {
+                timerEl.classList.remove('recording');
+            }
+        }
+
+        // ============================================================
+        //  API 配置热加载
+        // ============================================================
         function toggleConfigPanel() {
-            const body = document.getElementById('configBody');
-            const header = body.previousElementSibling;
+            var body = document.getElementById('configBody');
+            var header = body.previousElementSibling;
             if (body.classList.contains('show')) {
                 body.classList.remove('show');
                 header.classList.remove('active');
@@ -742,36 +1344,36 @@
                 loadHotConfig();
             }
         }
-        
+
         async function loadHotConfig() {
-            const configStatus = document.getElementById('configStatus');
-            const configInfo = document.getElementById('configInfo');
+            var configStatus = document.getElementById('configStatus');
+            var configInfo = document.getElementById('configInfo');
             try {
                 configStatus.className = 'config-status info';
                 configStatus.textContent = '正在加载配置...';
                 configStatus.style.display = 'block';
-                const response = await fetch('/api/hot-config');
-                const data = await response.json();
+                var response = await fetch('/api/hot-config');
+                var data = await response.json();
                 if (data.success) {
                     if (data.api_url) {
                         document.getElementById('apiUrl').value = data.api_url;
                         document.getElementById('currentApiUrl').textContent = data.api_url;
                     }
-                    document.getElementById('currentApiKey').textContent = 
+                    document.getElementById('currentApiKey').textContent =
                         (data.api_key && data.api_key !== '未配置') ? data.api_key : '未配置';
-                    const api_url_source = document.getElementById('apiUrlSource');
-                    const api_key_source = document.getElementById('apiKeySource');
-                    api_url_source.className = 'config-source ' + data.api_url_source;
-                    api_url_source.textContent = data.api_url_source === 'hot' ? '网页传入' : 'config.json';
-                    api_key_source.className = 'config-source ' + data.api_key_source;
-                    api_key_source.textContent = data.api_key_source === 'hot' ? '网页传入' : 'config.json';
+                    var apiUrlSource = document.getElementById('apiUrlSource');
+                    var apiKeySource = document.getElementById('apiKeySource');
+                    apiUrlSource.className = 'config-source ' + data.api_url_source;
+                    apiUrlSource.textContent = data.api_url_source === 'hot' ? '网页传入' : 'config.json';
+                    apiKeySource.className = 'config-source ' + data.api_key_source;
+                    apiKeySource.textContent = data.api_key_source === 'hot' ? '网页传入' : 'config.json';
                     document.getElementById('currentModel').textContent = data.model_name || '未配置';
                     configInfo.style.display = 'block';
                     if (data.api_url) document.getElementById('footerApiUrl').textContent = data.api_url;
                     if (data.model_name) document.getElementById('footerModel').textContent = data.model_name;
                     configStatus.className = 'config-status success';
                     configStatus.textContent = '✅ 配置加载成功';
-                    setTimeout(() => { configStatus.style.display = 'none'; }, 2000);
+                    setTimeout(function() { configStatus.style.display = 'none'; }, 2000);
                 } else {
                     configStatus.className = 'config-status error';
                     configStatus.textContent = '❌ 加载配置失败: ' + (data.message || '未知错误');
@@ -781,11 +1383,11 @@
                 configStatus.textContent = '❌ 网络错误: ' + error.message;
             }
         }
-        
+
         async function saveHotConfig() {
-            const apiUrl = document.getElementById('apiUrl').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const configStatus = document.getElementById('configStatus');
+            var apiUrl = document.getElementById('apiUrl').value.trim();
+            var apiKey = document.getElementById('apiKey').value.trim();
+            var configStatus = document.getElementById('configStatus');
             if (!apiKey) {
                 configStatus.className = 'config-status error';
                 configStatus.textContent = '❌ 请输入API Key';
@@ -802,18 +1404,18 @@
                 configStatus.className = 'config-status info';
                 configStatus.textContent = '🔄 正在保存配置...';
                 configStatus.style.display = 'block';
-                const response = await fetch('/api/hot-config', {
+                var response = await fetch('/api/hot-config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ api_key: apiKey, api_url: apiUrl })
                 });
-                const data = await response.json();
+                var data = await response.json();
                 if (data.success) {
                     configStatus.className = 'config-status success';
                     configStatus.textContent = '✅ ' + data.message;
                     document.getElementById('apiKey').value = '';
-                    setTimeout(() => { loadHotConfig(); }, 500);
-                    setTimeout(() => { configStatus.style.display = 'none'; }, 3000);
+                    setTimeout(function() { loadHotConfig(); }, 500);
+                    setTimeout(function() { configStatus.style.display = 'none'; }, 3000);
                 } else {
                     configStatus.className = 'config-status error';
                     configStatus.textContent = '❌ 保存失败: ' + (data.message || '未知错误');
@@ -823,22 +1425,22 @@
                 configStatus.textContent = '❌ 网络错误: ' + error.message;
             }
         }
-        
+
         async function resetHotConfig() {
-            const configStatus = document.getElementById('configStatus');
+            var configStatus = document.getElementById('configStatus');
             try {
                 configStatus.className = 'config-status info';
                 configStatus.textContent = '🔄 正在重置为默认配置...';
                 configStatus.style.display = 'block';
-                const response = await fetch('/api/hot-config', { method: 'DELETE' });
-                const data = await response.json();
+                var response = await fetch('/api/hot-config', { method: 'DELETE' });
+                var data = await response.json();
                 if (data.success) {
                     configStatus.className = 'config-status success';
                     configStatus.textContent = '✅ ' + data.message;
                     document.getElementById('apiKey').value = '';
                     document.getElementById('apiUrl').value = '';
-                    setTimeout(() => { loadHotConfig(); }, 500);
-                    setTimeout(() => { configStatus.style.display = 'none'; }, 3000);
+                    setTimeout(function() { loadHotConfig(); }, 500);
+                    setTimeout(function() { configStatus.style.display = 'none'; }, 3000);
                 } else {
                     configStatus.className = 'config-status error';
                     configStatus.textContent = '❌ 重置失败';
@@ -848,28 +1450,28 @@
                 configStatus.textContent = '❌ 网络错误: ' + error.message;
             }
         }
-        
-        // ===== 细粒度标签插入功能 =====
-        
+
+        // ============================================================
+        //  细粒度标签
+        // ============================================================
         function insertTagAtCursor(tag) {
-            const textarea = document.getElementById('textInput');
+            var textarea = document.getElementById('textInput');
             if (!textarea) return;
-            const startPos = textarea.selectionStart;
-            const endPos = textarea.selectionEnd;
-            const text = textarea.value;
-            const before = text.substring(0, startPos);
-            const after = text.substring(endPos);
-            textarea.value = before + tag + after;
+            var startPos = textarea.selectionStart;
+            var endPos = textarea.selectionEnd;
+            var text = textarea.value;
+            textarea.value = text.substring(0, startPos) + tag + text.substring(endPos);
             textarea.selectionStart = textarea.selectionEnd = startPos + tag.length;
             textarea.focus();
             updateCharCount();
             refreshPreview();
         }
-        
-        // ===== 整体风格标签功能 =====
-        
+
+        // ============================================================
+        //  整体风格标签
+        // ============================================================
         function toggleStyle(style, button) {
-            const index = selectedStyles.indexOf(style);
+            var index = selectedStyles.indexOf(style);
             if (index > -1) {
                 selectedStyles.splice(index, 1);
                 button.classList.remove('selected');
@@ -880,40 +1482,41 @@
             updateSelectedStyles();
             refreshPreview();
         }
-        
+
         function updateSelectedStyles() {
-            const tagsContainer = document.getElementById('selectedStyleTags');
+            var tagsContainer = document.getElementById('selectedStyleTags');
             if (selectedStyles.length === 0) {
                 tagsContainer.textContent = '无';
             } else {
-                tagsContainer.innerHTML = selectedStyles.map(s => '<span class="selected-tag">' + s + '</span>').join(' ');
+                tagsContainer.innerHTML = selectedStyles.map(function(s) { return '<span class="selected-tag">' + s + '</span>'; }).join(' ');
             }
         }
-        
+
         function clearStyles() {
             selectedStyles = [];
-            document.querySelectorAll('.style-tag').forEach(btn => { btn.classList.remove('selected'); });
+            document.querySelectorAll('.style-tag').forEach(function(btn) { btn.classList.remove('selected'); });
             updateSelectedStyles();
             refreshPreview();
         }
-        
-        // ===== 文本相关功能 =====
-        
+
+        // ============================================================
+        //  文本功能
+        // ============================================================
         function updateCharCount() {
-            const textarea = document.getElementById('textInput');
-            const charCount = document.getElementById('charCount');
+            var textarea = document.getElementById('textInput');
+            var charCount = document.getElementById('charCount');
             if (textarea && charCount) {
-                const count = textarea.value.length;
+                var count = textarea.value.length;
                 charCount.textContent = count + '/500 字符';
                 charCount.style.color = count > 500 ? '#f44336' : '#666';
             }
         }
-        
+
         function refreshPreview() {
-            const textarea = document.getElementById('textInput');
-            const previewText = document.getElementById('previewText');
+            var textarea = document.getElementById('textInput');
+            var previewText = document.getElementById('previewText');
             if (textarea && previewText) {
-                let fullText = '';
+                var fullText = '';
                 if (selectedStyles.length > 0) {
                     fullText = '(' + selectedStyles.join(')(') + ')';
                 }
@@ -921,18 +1524,19 @@
                 previewText.textContent = fullText || '暂无预览';
             }
         }
-        
+
         function clearText() {
-            const textarea = document.getElementById('textInput');
+            var textarea = document.getElementById('textInput');
             if (textarea) {
                 textarea.value = '';
                 updateCharCount();
                 refreshPreview();
             }
         }
-        
-        // ===== 文件上传功能 =====
-        
+
+        // ============================================================
+        //  文件上传
+        // ============================================================
         function handleFileSelect(file) {
             if (file) {
                 document.getElementById('fileName').textContent = '文件名: ' + file.name;
@@ -940,20 +1544,24 @@
                 document.getElementById('fileType').textContent = '类型: ' + file.type;
                 document.getElementById('uploadArea').style.display = 'none';
                 document.getElementById('fileInfo').style.display = 'block';
+
+                recordedBlob = null;
+                document.getElementById('recordIndicator').classList.remove('active');
             }
         }
-        
+
         function removeFile() {
             document.getElementById('audioFile').value = '';
             document.getElementById('fileInfo').style.display = 'none';
             document.getElementById('uploadArea').style.display = 'block';
         }
-        
-        // ===== 切换 API Key 可见性 =====
-        
+
+        // ============================================================
+        //  切换 API Key 可见性
+        // ============================================================
         function toggleKeyVisibility() {
-            const input = document.getElementById('personalApiKey');
-            const icon = document.getElementById('toggleKeyIcon');
+            var input = document.getElementById('personalApiKey');
+            var icon = document.getElementById('toggleKeyIcon');
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'fas fa-eye-slash';
@@ -962,66 +1570,69 @@
                 icon.className = 'fas fa-eye';
             }
         }
-        
-        // ===== 克隆功能 =====
-        
+
+        // ============================================================
+        //  克隆功能
+        // ============================================================
         async function startClone() {
-            const audioFile = document.getElementById('audioFile');
-            const textInput = document.getElementById('textInput');
-            const personalApiKey = document.getElementById('personalApiKey');
-            const personalApiUrl = document.getElementById('personalApiUrl');
-            const file = audioFile.files[0];
-            let text = textInput.value.trim();
-            
+            var textInput = document.getElementById('textInput');
+            var personalApiKey = document.getElementById('personalApiKey');
+            var personalApiUrl = document.getElementById('personalApiUrl');
+            var text = textInput.value.trim();
+
             if (isProcessing) return;
-            
-            if (!file) { alert('请先上传参考音频文件！'); return; }
+
+            var file = null;
+            if (recordedBlob) {
+                file = new File([recordedBlob], 'recording.wav', { type: 'audio/wav' });
+            } else {
+                file = document.getElementById('audioFile').files[0];
+            }
+
+            if (!file) { alert('请先上传或录制参考音频！'); return; }
             if (!text) { alert('请输入要合成的文本！'); return; }
-            
-            // 个人 Key 是可选的，不填则后端会使用管理员配置的全局 Key
-            // 删除了之前的强制校验逻辑
-            
+
             if (selectedStyles.length > 0) {
                 text = '(' + selectedStyles.join(')(') + ')' + text;
             }
-            
+
             isProcessing = true;
-            const processBtn = document.getElementById('processBtn');
+            var processBtn = document.getElementById('processBtn');
             processBtn.disabled = true;
             processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
-            
+
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('resultSection').style.display = 'none';
-            
-            const formData = new FormData();
+
+            var formData = new FormData();
             formData.append('audio_file', file);
             formData.append('text', text);
             formData.append('api_key', personalApiKey.value.trim());
             formData.append('api_url', personalApiUrl.value.trim());
-            
+
             try {
-                const response = await fetch('/clone', { method: 'POST', body: formData });
-                const data = await response.json();
-                
+                var response = await fetch('/clone', { method: 'POST', body: formData });
+                var data = await response.json();
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('resultSection').style.display = 'block';
-                
+
                 if (data.success) {
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('errorMessage').style.display = 'none';
-                    
-                    const audioElement = document.getElementById('audioElement');
-                    const previewUrl = window.location.origin + '/preview/' + data.filename + '?t=' + Date.now();
+
+                    var audioElement = document.getElementById('audioElement');
+                    var previewUrl = window.location.origin + '/preview/' + data.filename + '?t=' + Date.now();
                     audioElement.src = previewUrl;
                     audioElement.load();
                     lastPreviewUrl = previewUrl;
                     document.getElementById('audioPlayer').style.display = 'block';
-                    
+
                     document.getElementById('downloadLink').href = window.location.origin + '/download/' + data.filename;
                     document.getElementById('downloadInfo').textContent = '(' + data.file_size.toFixed(1) + ' KB)';
                     document.getElementById('downloadSection').style.display = 'block';
                     document.getElementById('filePath').textContent = '本地路径: ' + data.local_path;
-                    
+
                     document.getElementById('debugInfo').style.display = 'block';
                     document.getElementById('sentText').textContent = data.sent_text || text;
                     document.getElementById('debugStyleTag').textContent = data.style_tag || '无';
@@ -1052,9 +1663,10 @@
                 processBtn.innerHTML = '<i class="fas fa-play"></i> 开始克隆声音';
             }
         }
-        
-        // ===== 重置表单 =====
-        
+
+        // ============================================================
+        //  重置表单
+        // ============================================================
         function resetForm() {
             document.getElementById('resultSection').style.display = 'none';
             document.getElementById('debugInfo').style.display = 'none';
@@ -1062,52 +1674,76 @@
             document.getElementById('fileInfo').style.display = 'none';
             document.getElementById('uploadArea').style.display = 'block';
             document.getElementById('textInput').value = '';
+
+            recordedBlob = null;
+            document.getElementById('recordPreview').classList.remove('active');
+            document.getElementById('recordIndicator').classList.remove('active');
+            document.getElementById('recordingTimer').textContent = '00:00';
+            document.getElementById('recordingTimer').classList.remove('recording');
+            document.getElementById('recordStatus').className = 'record-status';
+            document.getElementById('recordStatus').textContent = '点击麦克风按钮开始录音';
+            document.getElementById('waveformPlaceholder').classList.remove('hidden');
+
             selectedStyles = [];
-            document.querySelectorAll('.style-tag').forEach(btn => { btn.classList.remove('selected'); });
+            document.querySelectorAll('.style-tag').forEach(function(btn) { btn.classList.remove('selected'); });
             updateSelectedStyles();
             updateCharCount();
             refreshPreview();
         }
-        
-        // ===== 标签页切换 =====
-        
+
+        // ============================================================
+        //  标签页切换
+        // ============================================================
         function switchStyleTab(tabId) {
-            document.querySelectorAll('.style-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.style-tab').forEach(function(t) { t.classList.remove('active'); });
             document.querySelector('.style-tab[data-tab="' + tabId + '"]').classList.add('active');
-            document.querySelectorAll('.style-group').forEach(g => g.classList.remove('active'));
+            document.querySelectorAll('.style-group').forEach(function(g) { g.classList.remove('active'); });
             document.getElementById(tabId).classList.add('active');
         }
-        
+
         function switchTagTab(tabId) {
-            document.querySelectorAll('.tag-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tag-tab').forEach(function(t) { t.classList.remove('active'); });
             document.querySelector('.tag-tab[data-tab="' + tabId + '"]').classList.add('active');
-            document.querySelectorAll('.tag-group').forEach(g => g.classList.remove('active'));
+            document.querySelectorAll('.tag-group').forEach(function(g) { g.classList.remove('active'); });
             document.getElementById(tabId).classList.add('active');
         }
-        
-        // ===== 初始化 =====
-        
+
+        // ============================================================
+        //  初始化
+        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.style-tag').forEach(button => {
-                button.addEventListener('click', function() {
-                    toggleStyle(this.getAttribute('data-style'), this);
-                });
+            // 检测 iOS 并显示提示
+            var ua = navigator.userAgent;
+            if (/iPhone|iPad|iPod/.test(ua)) {
+                document.getElementById('iosHint').style.display = 'block';
+                if (!/Safari/.test(ua) || /Chrome|CriOS|FxiOS/.test(ua)) {
+                    document.getElementById('iosHint').style.background = '#f8d7da';
+                    document.getElementById('iosHint').style.borderColor = '#f5c6cb';
+                    document.getElementById('iosHint').style.color = '#721c24';
+                }
+            }
+
+            document.querySelectorAll('.style-tag').forEach(function(button) {
+                button.addEventListener('click', function() { toggleStyle(this.getAttribute('data-style'), this); });
             });
             document.getElementById('clearStylesBtn').addEventListener('click', clearStyles);
-            document.querySelectorAll('.style-tab').forEach(tab => {
+
+            document.querySelectorAll('.style-tab').forEach(function(tab) {
                 tab.addEventListener('click', function() { switchStyleTab(this.getAttribute('data-tab')); });
             });
-            document.querySelectorAll('.tag-tab').forEach(tab => {
+            document.querySelectorAll('.tag-tab').forEach(function(tab) {
                 tab.addEventListener('click', function() { switchTagTab(this.getAttribute('data-tab')); });
             });
-            const textInput = document.getElementById('textInput');
+
+            var textInput = document.getElementById('textInput');
             if (textInput) {
                 textInput.addEventListener('input', function() { updateCharCount(); refreshPreview(); });
             }
             document.getElementById('clearTextBtn').addEventListener('click', clearText);
-            const audioFile = document.getElementById('audioFile');
-            const selectFileBtn = document.getElementById('selectFileBtn');
-            const uploadArea = document.getElementById('uploadArea');
+
+            var audioFile = document.getElementById('audioFile');
+            var selectFileBtn = document.getElementById('selectFileBtn');
+            var uploadArea = document.getElementById('uploadArea');
             if (selectFileBtn && audioFile) {
                 selectFileBtn.addEventListener('click', function(e) { e.stopPropagation(); audioFile.click(); });
             }
@@ -1132,18 +1768,25 @@
                 });
             }
             document.getElementById('removeFileBtn').addEventListener('click', removeFile);
+
+            window.addEventListener('resize', function() {
+                if (document.getElementById('recordPanel').classList.contains('active')) {
+                    initWaveformCanvas();
+                }
+            });
+
             updateCharCount();
             refreshPreview();
-            setTimeout(() => { checkInitialConfig(); }, 500);
+            setTimeout(function() { checkInitialConfig(); }, 500);
         });
-        
+
         async function checkInitialConfig() {
             try {
-                const response = await fetch('/api/hot-config');
-                const data = await response.json();
+                var response = await fetch('/api/hot-config');
+                var data = await response.json();
                 if (data.success && !data.api_key_configured) {
                     toggleConfigPanel();
-                    const configStatus = document.getElementById('configStatus');
+                    var configStatus = document.getElementById('configStatus');
                     configStatus.className = 'config-status error';
                     configStatus.textContent = '⚠️ 请先配置API Key才能使用声音克隆功能';
                     configStatus.style.display = 'block';

@@ -245,7 +245,7 @@ def clone_voice(audio_path, text):
         print(f"    文本: {text[:100]}...")
         print(f"    音频大小: {len(audio_data)/1024:.1f} KB")
         
-        response = requests.post(api_url, headers=headers, json=payload, timeout=120)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=75)
         
         if response.status_code == 200:
             result = response.json()
@@ -344,7 +344,7 @@ def clone_voice_with_key(audio_path, text, request_api_key, request_api_url=''):
         print(f"    文本: {text[:100]}...")
         print(f"    音频大小: {len(audio_data)/1024:.1f} KB")
         
-        response = requests.post(api_url, headers=headers, json=payload, timeout=120)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=75)
         
         if response.status_code == 200:
             result = response.json()
