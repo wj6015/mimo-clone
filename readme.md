@@ -88,7 +88,7 @@ mimo-clone/ ├── app.py # Flask 后端主程序 ├── config.json # 应
 ```bash
 # 1. 连接 VPS
 ssh root@你的VPS地址 -p 端口
-
+、、、
 # 2. 下载管理脚本（方式一：git）
 apk add git  # Alpine
 git clone https://github.com/wj6015/mimo-clone.git
